@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+
+import argparse
+import re
+import sys
+
+parser = argparse.ArgumentParser()
+parser.add_argument('hex_bytes', metavar='HB', type=str, nargs='+', help='Hex byte')
+parser.add_argument("-r", "--reverse", action="store_true", help="Reverse byte order")
+parser.add_argument("-H", "--hex", action="store_true", help="Output a normalized hex string")
+args = parser.parse_args()
+
+buf = bytes.fromhex(''.join([hbs.removeprefix('0x') for hbs in args.hex_bytes]))
+if args.reverse:
+	buf = buf[::-1]
+if not args.hex:
+	sys.stdout.buffer.write(buf)
+else:
+	print(buf.hex())

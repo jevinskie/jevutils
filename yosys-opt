@@ -9,6 +9,9 @@ def main(args):
         "proc",
         "opt_clean",
         "opt",
+        # "proc_clean",
+        # "opt_clean",
+        # "opt",
         f"write_verilog {args.out_file}",
     ]
     yargs = []

@@ -14,6 +14,9 @@ parser.add_argument("-r", "--reverse", action="store_true", help="Reverse byte o
 parser.add_argument(
     "-H", "--hex", action="store_true", help="Output a normalized hex string"
 )
+parser.add_argument(
+    "-x", "--hex-prefix", action="store_true", help="Output bytes seperated by ' 0x'"
+)
 parser.add_argument("-s", "--string", action="store_true", help="print escaped string literal")
 parser.add_argument("-B", "--output-binary", action="store_true", help="print binary")
 args = parser.parse_args()
@@ -36,7 +39,9 @@ if args.string:
     print(repr(buf)[1:])
 if args.output_binary:
     sys.stdout.buffer.write(buf)
-elif not args.hex:
+elif not (args.hex or args.hex_prefix):
     sys.stdout.buffer.write(buf)
+elif args.hex_prefix:
+    print(" ".join([f"{b:#04x}" for b in buf]))
 else:
     print(buf.hex())

@@ -13,7 +13,7 @@ def mono_word(s: str):
         mo = o
         if o >= ord("A") and o <= ord("Z"):
             mo += upper_off
-        elif o >= ord("A") and o <= ord("z"):
+        elif o >= ord("a") and o <= ord("z"):
             mo += lower_off
         elif o >= ord("0") and o <= ord("9"):
             mo += digit_off

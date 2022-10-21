@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+import sys
+
+upper_off = ord("𝙰") - ord("A")
+lower_off = ord("𝚊") - ord("a")
+digit_off = ord("𝟶") - ord("0")
+
+def mono_word(s: str):
+    mono = ""
+    for c in s:
+        o = ord(c)
+        mo = o
+        if o >= ord("A") and o <= ord("Z"):
+            mo += upper_off
+        elif o >= ord("A") and o <= ord("z"):
+            mo += lower_off
+        elif o >= ord("0") and o <= ord("9"):
+            mo += digit_off
+        mono += chr(mo)
+    return mono
+
+mono_words = []
+
+print(" ".join([mono_word(w) for w in sys.argv[1:]]))

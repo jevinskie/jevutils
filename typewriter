@@ -17,7 +17,10 @@ def mono_word(s: str):
             mo += lower_off
         elif o >= ord("0") and o <= ord("9"):
             mo += digit_off
-        mono += chr(mo)
+        if c != "\t":
+            mono += chr(mo)
+        else:
+            mono += "    "
     return mono
 
 mono_words = []

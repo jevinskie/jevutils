@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+import argparse
+from pathlib import Path
+
+import Foundation
+import UniformTypeIdentifiers
+from CoreServices import LaunchServices
+
+
+def real_main(args):
+    bundle_path = args.app_bundle.resolve()
+    bundle = Foundation.NSBundle.bundleWithPath_(str(bundle_path))
+    if bundle is None:
+        raise ValueError(f"Can't find bundle identifier for the path '{bundle_path}")
+    bundle_id = bundle.bundleIdentifier()
+    if args.verbose:
+        print(f"Bundle '{bundle_path}' has identifier '{bundle_id}'")
+    for ext in args.extensions:
+        uti = UniformTypeIdentifiers.UTType.typeWithFilenameExtension_(ext)
+        assert uti is not None
+        if args.verbose:
+            print(f"Extension '.{ext}' maps to UTI '{uti}'")
+        res = LaunchServices.LSSetDefaultRoleHandlerForContentType(
+            str(uti), LaunchServices.kLSRolesAll, bundle_id
+        )
+        if res != 0:
+            raise ValueError(
+                f"Can't associate extenion '.{ext}' / UTI '{uti}' to bundle ID '{bundle_id}'"
+            )
+
+
+def get_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="example:\n  launchservices-set-file-associations -v -e cpp c c++ -e h hpp -a /Applications/Xcode.app",
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="be verbose")
+    parser.add_argument(
+        "-e",
+        "--extensions",
+        required=True,
+        action="extend",
+        nargs="+",
+        help="whitespace seperated list of file extensions to associate",
+    )
+    parser.add_argument(
+        "-a",
+        "--app-bundle",
+        required=True,
+        type=Path,
+        help="app bundle to associate file extensions with",
+    )
+    return parser
+
+
+def main():
+    real_main(get_arg_parser().parse_args())
+
+
+if __name__ == "__main__":
+    main()

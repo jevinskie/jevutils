@@ -6,6 +6,7 @@ upper_off = ord("𝙰") - ord("A")
 lower_off = ord("𝚊") - ord("a")
 digit_off = ord("𝟶") - ord("0")
 
+
 def mono_word(s: str):
     mono = ""
     for c in s:
@@ -22,6 +23,7 @@ def mono_word(s: str):
         else:
             mono += "    "
     return mono
+
 
 mono_words = []
 

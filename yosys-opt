@@ -3,6 +3,7 @@
 import argparse
 import subprocess
 
+
 def main(args):
     ycmds = [
         f"read_verilog {args.in_file}",
@@ -19,6 +20,7 @@ def main(args):
         yargs.append("-p")
         yargs.append(ycmd)
     subprocess.check_call(["yosys", *yargs])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("yosys-opt")

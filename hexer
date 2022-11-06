@@ -11,9 +11,7 @@ parser.add_argument(
     "-b", "--stdin-binary", action="store_true", help="Specify that stdin is raw bytes"
 )
 parser.add_argument("-r", "--reverse", action="store_true", help="Reverse byte order")
-parser.add_argument(
-    "-H", "--hex", action="store_true", help="Output a normalized hex string"
-)
+parser.add_argument("-H", "--hex", action="store_true", help="Output a normalized hex string")
 parser.add_argument(
     "-x", "--hex-prefix", action="store_true", help="Output bytes seperated by ' 0x'"
 )
@@ -25,9 +23,7 @@ if not args.stdin_binary:
     if not args.stdin:
         hex_bytes_str = "".join([hbs.removeprefix("0x") for hbs in args.hex_bytes])
     else:
-        hex_bytes_str = "".join(
-            [hbs.removeprefix("0x") for hbs in sys.stdin.read().split()]
-        )
+        hex_bytes_str = "".join([hbs.removeprefix("0x") for hbs in sys.stdin.read().split()])
 
     buf = bytes.fromhex("".join([hbs.removeprefix("0x") for hbs in hex_bytes_str]))
 else:

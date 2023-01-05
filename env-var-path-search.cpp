@@ -34,8 +34,7 @@ int main(int argc, char *argv[]) {
     if (const char *env_p = std::getenv(argv[1])) {
         envvar_str = env_p;
     } else {
-        std::cerr << "Error: Unable to get environment variable '" << envvar_str << "."
-                  << std::endl;
+        std::cerr << "Error: Unable to get environment variable '" << argv[1] << "'." << std::endl;
         return 2;
     }
 

@@ -56,7 +56,7 @@ def main(args):
                 matches[pth] = m
     ml = matches.items()
     ml = sorted(ml, key=lambda e: e[1])
-    for (pth, m) in ml:
+    for pth, m in ml:
         print(f"path: {pth} m: {m}")
     return 0
 

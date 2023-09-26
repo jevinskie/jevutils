@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 from CoreServices import LaunchServices
 
 
-def real_main(args):
+def set_file_association(args):
     bundle_path = args.app_bundle.resolve()
     bundle = Foundation.NSBundle.bundleWithPath_(str(bundle_path))
     if bundle is None:
@@ -30,6 +30,28 @@ def real_main(args):
             )
 
 
+def dump_file_association(args):
+    if args.app_bundle:
+        bundle_path = args.app_bundle.resolve()
+        bundle = Foundation.NSBundle.bundleWithPath_(str(bundle_path))
+        if bundle is None:
+            raise ValueError(f"Can't find bundle identifier for the path '{bundle_path}")
+        bundle_id = bundle.bundleIdentifier()
+        print(f"Bundle '{bundle_path}' has identifier '{bundle_id}'")
+
+    for ext in args.extensions:
+        uti = UniformTypeIdentifiers.UTType.typeWithFilenameExtension_(ext)
+        assert uti is not None
+        print(f"Extension '.{ext}' maps to UTI '{uti}'")
+
+
+def real_main(args):
+    if args.info:
+        dump_file_association(args)
+    else:
+        set_file_association(args)
+
+
 def get_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -47,10 +69,10 @@ def get_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-a",
         "--app-bundle",
-        required=True,
         type=Path,
         help="app bundle to associate file extensions with",
     )
+    parser.add_argument("-i", "--info", action="store_true", help="Get file info")
     return parser
 
 

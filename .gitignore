@@ -1,1 +1,4 @@
-nsdpi
+/nsdpi
+/fsgetpath-util
+/dsc-info
+**/*.dSYM/

@@ -1,4 +1,6 @@
-// clang -o nsdpi nsdpi.m -framework Foundation -framework AppKit
+#ifndef __APPLE__
+#error dsc-info is only for Apple platforms
+#endif
 
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>

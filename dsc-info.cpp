@@ -201,5 +201,14 @@ int main(int argc, const char **argv) {
                 infos->sharedCacheFSObjID, e, strerror(e));
         return 4;
     }
+    if (fs_get_path_res >= 0 && fs_get_path_res < 2) {
+        fprintf(stderr,
+                "fsgetpath for dyld_shared_cache fsid: 0x%016" PRIx64 " (%" PRIu64
+                ") obj_id: 0x%016" PRIx64 " (%" PRIu64 ") returned an empty path.\n",
+                infos->sharedCacheFSID, infos->sharedCacheFSID, infos->sharedCacheFSObjID,
+                infos->sharedCacheFSObjID);
+        return 5;
+    }
+    printf("sharedCache path: '%s'\n", maybe_null_str(sc_path));
     return 0;
 }

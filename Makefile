@@ -1,4 +1,4 @@
-TARGETS := fsgetpath-util
+TARGETS := fsgetpath-util dsc-info nsdpi
 
 ifeq ($(shell uname -s),Darwin)
 TARGETS += nsdpi dsc-info

@@ -25,4 +25,4 @@ fsgetpath-util: fsgetpath-util.cpp
 	$(CXX) -o $@ $^ $(CXX_FLAGS)
 
 dsc-info: dsc-info.cpp
-	$(CXX) -o $@ $^ $(CXX_FLAGS)
+	$(CXX) -o $@ $^ $(CXX_FLAGS) -arch x86_64 -arch arm64 -arch arm64e

@@ -182,7 +182,7 @@ int main(int argc, const char **argv) {
            au[12], au[13], au[14], au[15]);
 #endif
     if (version < 18) {
-        return 0;
+        // return 0;
     }
     printf("sharedCacheFSID: 0x%016" PRIx64 " (%" PRIu64 ")\n", infos->sharedCacheFSID,
            infos->sharedCacheFSID);

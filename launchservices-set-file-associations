@@ -1,19 +1,63 @@
 #!/usr/bin/env python3
 
 import argparse
+import sys
+from collections import UserString
 from pathlib import Path
 
 import Foundation
+import objc
 import UniformTypeIdentifiers
 from CoreServices import LaunchServices
 
 
+class BundlePath(Path):
+    bundle_id: str
+    bundle: Foundation.NSBundle
+
+    def __init__(self):
+        super().__init__()
+        self = self.resolve()
+        bundle = Foundation.NSBundle.bundleWithPath_(str(self))
+        if bundle is None:
+            raise ValueError(f"Can't find bundle identifier for the path '{self}")
+        self.bundle_id = bundle.bundleIdentifier()
+        self.bundle = bundle
+
+
+class BundleID(UserString):
+    bundle_path: Path
+    bundle: Foundation.NSBundle
+
+    def __init__(self, identifier: str):
+        super().__init__(identifier)
+        bundle_urls, _ = LaunchServices.LSCopyApplicationURLsForBundleIdentifier(
+            identifier, objc.NULL
+        )
+        if bundle_urls is None or not len(bundle_urls):
+            raise ValueError(f"Can't find bundle with identifier '{identifier}'")
+        self.bundle_path = Path(str(bundle_urls[0].path()))
+        bundle = Foundation.NSBundle.bundleWithPath_(str(self.bundle_path))
+        if not bundle:
+            raise ValueError(
+                f"Can't find bundle with path '{self.bundle_path}' for identifier '{identifier}'"
+            )
+        self.bundle = bundle
+
+    def __repr__(self) -> str:
+        print(f"bid: super: {super().__str__()}")
+        print(f"bid path: {self.bundle_path}")
+        print(f"bid bundle: {self.bundle}")
+        return f"<BundleID id: '{super().__str__()}', path: '{self.bundle_path}', bundle: {self.bundle}"
+
+
 def set_file_association(args):
-    bundle_path = args.app_bundle.resolve()
-    bundle = Foundation.NSBundle.bundleWithPath_(str(bundle_path))
-    if bundle is None:
-        raise ValueError(f"Can't find bundle identifier for the path '{bundle_path}")
+    if args.app_bundle:
+        bundle = args.app_bundle.bundle
+    else:
+        bundle = args.bundle_id.bundle
     bundle_id = bundle.bundleIdentifier()
+    bundle_path = Path(bundle.bundlePath())
     if args.verbose:
         print(f"Bundle '{bundle_path}' has identifier '{bundle_id}'")
     for ext in args.extensions:
@@ -32,17 +76,29 @@ def set_file_association(args):
 
 def dump_file_association(args):
     if args.app_bundle:
-        bundle_path = args.app_bundle.resolve()
-        bundle = Foundation.NSBundle.bundleWithPath_(str(bundle_path))
-        if bundle is None:
-            raise ValueError(f"Can't find bundle identifier for the path '{bundle_path}")
-        bundle_id = bundle.bundleIdentifier()
-        print(f"Bundle '{bundle_path}' has identifier '{bundle_id}'")
+        print(f"Bundle '{args.app_bundle}' has identifier '{args.app_bundle.bundle_id}'")
+    elif args.bundle_id:
+        print(f"Bundle ID '{args.bundle_id} has path '{args.bundle_id.bundle_path}'")
 
     for ext in args.extensions:
         uti = UniformTypeIdentifiers.UTType.typeWithFilenameExtension_(ext)
         assert uti is not None
         print(f"Extension '.{ext}' maps to UTI '{uti}'")
+        bundle_handlers = LaunchServices.LSCopyAllRoleHandlersForContentType(
+            str(uti), LaunchServices.kLSRolesAll
+        )
+        default_bundle_handler = LaunchServices.LSCopyDefaultRoleHandlerForContentType(
+            str(uti), LaunchServices.kLSRolesAll
+        )
+        if default_bundle_handler is None:
+            print("No default handler bundle ID.")
+        if bundle_handlers is None:
+            print("No handler bundle IDs")
+        else:
+            print("Handled by bundle(s):")
+            for i, bundle in enumerate(bundle_handlers):
+                is_def = " [default]" if bundle == default_bundle_handler else ""
+                print(f"\t[{i:2d}]: {bundle}{is_def}")
 
 
 def real_main(args):
@@ -66,11 +122,15 @@ def get_arg_parser() -> argparse.ArgumentParser:
         nargs="+",
         help="whitespace seperated list of file extensions to associate",
     )
-    parser.add_argument(
+    app_id_group = parser.add_mutually_exclusive_group()
+    app_id_group.add_argument(
         "-a",
         "--app-bundle",
-        type=Path,
+        type=BundlePath,
         help="app bundle to associate file extensions with",
+    )
+    app_id_group.add_argument(
+        "-b", "--bundle-id", type=BundleID, help="bundle ID to associate file extension with"
     )
     parser.add_argument("-i", "--info", action="store_true", help="Get file info")
     return parser

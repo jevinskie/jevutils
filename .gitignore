@@ -1,4 +1,5 @@
 /nsdpi
 /fsgetpath-util
 /dsc-info
+/dump-fixups
 **/*.dSYM/

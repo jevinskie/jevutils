@@ -1,4 +1,4 @@
-TARGETS := fsgetpath-util dsc-info nsdpi
+TARGETS := fsgetpath-util dsc-info nsdpi dump-fixups
 
 ifeq ($(shell uname -s),Darwin)
 TARGETS += nsdpi dsc-info
@@ -26,3 +26,6 @@ fsgetpath-util: fsgetpath-util.cpp
 
 dsc-info: dsc-info.cpp
 	$(CXX) -o $@ $^ $(CXX_FLAGS) -arch x86_64 -arch arm64 -arch arm64e
+
+dump-fixups: dump-fixups.cpp
+	env PKG_CONFIG_PATH="$(shell brew --prefix)/opt/fmt/pkgconfig" $(CXX) -o $@ $^ $(CXX_FLAGS) $(shell pkg-config pkg-config --libs fmt --cflags)

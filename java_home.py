@@ -4,11 +4,8 @@ import plistlib
 import shutil
 import subprocess
 import sys
-from numbers import Rational
-from pathlib import Path
 from typing import Callable
 
-from packaging.version import Version, parse
 from rich import print
 
 
@@ -41,9 +38,10 @@ def main() -> int:
     java_plist_xml = java_home("-X").out.encode()
     java_plist = plistlib.loads(java_plist_xml, fmt=plistlib.FMT_XML)
     print(java_plist)
-    java_selections: dict[tuple[Rational, bool], tuple[Path, str]] = {}
+    # java_selections: dict[tuple[Rational, bool], tuple[Path, str]] = {}
     for jvm in java_plist:
-        ver_str = jvm["JVMPlatformVersion"]
+        # ver_str = jvm["JVMPlatformVersion"]
+        pass
 
     return 0
 

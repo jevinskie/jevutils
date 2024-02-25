@@ -2,22 +2,21 @@
 
 import argparse
 from collections import UserString
-from pathlib import Path
 
 import Foundation
 import objc
 import UniformTypeIdentifiers
 from CoreServices import LaunchServices
+from path import Path
 
 
 class BundlePath(Path):
     bundle_id: str
     bundle: Foundation.NSBundle
 
-    def __init__(self):
-        super().__init__()
-        self = self.resolve()
-        bundle = Foundation.NSBundle.bundleWithPath_(str(self))
+    def __init__(self, path: str):
+        super().__init__(path)
+        bundle = Foundation.NSBundle.bundleWithPath_(self)
         if bundle is None:
             raise ValueError(f"Can't find bundle identifier for the path '{self}")
         self.bundle_id = bundle.bundleIdentifier()

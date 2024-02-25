@@ -2,13 +2,16 @@
 
 import argparse
 import logging
+import re
 import shutil
 import subprocess
 import sys
 from collections.abc import Sequence
 from os import PathLike, environ
+from tempfile import NamedTemporaryFile
 from typing import Any, Final, Protocol, runtime_checkable
 
+from path import Path
 from rich import print
 from rich.console import Console
 from rich.logging import RichHandler
@@ -23,9 +26,9 @@ logging.basicConfig(
     datefmt="[%X]",
     handlers=[RichHandler(console=Console(stderr=True), rich_tracebacks=True)],
 )
-log = logging.getLogger(program_name)
+logger = logging.getLogger(program_name)
 
-RunArg = str | bytes | PathLike[str] | PathLike[bytes]
+RunArg = str | bytes | PathLike[str] | PathLike[bytes] | Path
 RunArgs = RunArg | Sequence[RunArg]
 StdRes = str | bytes | None
 RunEnv = dict[str, str] | None
@@ -61,10 +64,12 @@ def run_cmd(
 ) -> CompletedProcessWithOut:
     args = (*args,)
     if log:
-        print(f"Running: {' '.join(map(str, args))}", file=sys.stderr)
+        logger.info(f"Running: {' '.join(map(str, args))}")
     if set(kwargs.keys()).isdisjoint({"stdin", "stdout"}):
+        logger.debug("Capturing command ^ output")
         kwargs["capture_output"] = True
     else:
+        logger.debug("Not capturing command ^ output")
         kwargs["capture_output"] = False
     if env is not None:
         new_env = environ.copy()
@@ -99,33 +104,44 @@ def gen_cmd(bin_name: str, log: bool = False) -> CmdResult:
     if bin_path is None:
         raise FileNotFoundError(bin_name)
 
-    def cmd_runner(*args: RunArg, env: RunEnv, **kwargs: dict[str, Any]) -> CompletedProcessWithOut:
+    def cmd_runner(
+        *args: RunArg, env: RunEnv = None, **kwargs: dict[str, Any]
+    ) -> CompletedProcessWithOut:
         return run_cmd(bin_path, *args, env=env, log=log, **kwargs)
 
     return cmd_runner
 
 
-pyenv = gen_cmd("pyenv")
-
-
-def is_version_available(ver: str) -> bool:
+def get_pyenv_python_bin(pyenv: CmdResult, ver: str) -> Path:
     try:
-        pyenv(
-            "exec",
-            "python3",
-            "--version",
-            env={"PYENV_VERSION": ver},
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    except subprocess.CalledProcessError:
-        log.exception(f"Error checking for pyenv Python version '{ver}")
-        return False
-    return True
+        r = pyenv("which", "python3", env={"PYENV_VERSION": ver})
+    except subprocess.CalledProcessError as e:
+        logger.exception(f"Error checking for pyenv Python version '{ver}")
+        return e
+    return Path(r.out.strip())
+
+
+def get_python_cmd(python_bin_path: Path, log: bool = False) -> CmdResult:
+    cmd = gen_cmd(python_bin_path, log=log)
+    try:
+        r = cmd("-m", "pip", "--version")
+        logger.debug(f"Running {python_bin_path} -m pip --version and got: {r.out.strip()}")
+    except subprocess.CalledProcessError as e:
+        logger.exception(f"Error checking for Python with pip at path: '{python_bin_path}")
+        raise e
+    return cmd
 
 
 def get_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=program_name)
+    parser.add_argument(
+        "-p",
+        "--python-paths",
+        action="store_true",
+        help="instead of pyenv versions, treat args as paths to each Python interpreter",
+    )
+    parser.add_argument("-k", "--keep", action="store_true", help="keep versions")
+    parser.add_argument("-U", "--upgrade", action="store_true", help="upgrade versions")
     parser.add_argument("-v", "--verbose", action="store_true", help="be verbose")
     parser.add_argument(
         "from_version", help="pyenv Python version to copy pip installed packages from"
@@ -134,14 +150,44 @@ def get_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
+at_pattern = re.compile(r"^\S+ @ ")
+
+
 def real_main(args: argparse.Namespace) -> int:
     verbose: Final[bool] = args.verbose
     if verbose:
-        log.setLevel(logging.DEBUG)
-        log.info(f"{program_name}: verbose mode enabled")
-    for ver in (args.from_version, args.to_version):
-        if not is_version_available(ver):
-            raise ValueError(f"pyenv version '{ver}' is not installed")
+        logger.setLevel(logging.DEBUG)
+        logger.info(f"{program_name}: verbose mode enabled")
+    if not args.python_paths:
+        pyenv = gen_cmd("pyenv")
+        print(f"pyenv: {pyenv}", file=sys.stderr)
+        from_py_path = get_pyenv_python_bin(pyenv, args.from_version)
+        to_py_path = get_pyenv_python_bin(pyenv, args.to_version)
+    else:
+        from_py_path = Path(args.from_version)
+        to_py_path = Path(args.to_version)
+    from_py_cmd = get_python_cmd(from_py_path)
+    to_py_cmd = get_python_cmd(to_py_path, log=True)
+    from_pkgs = from_py_cmd("-m", "pip", "freeze").out
+    from_pkgs: list[str] = from_pkgs.strip().splitlines()
+    to_pkgs: list[str] = []
+    for pkg in from_pkgs:
+        if args.keep or pkg.startswith("-e ") or at_pattern.match(pkg):
+            to_pkgs.append(pkg)
+        else:
+            pkg_ver_split = pkg.split("==")
+            if len(pkg_ver_split) != 2:
+                raise ValueError(f"Expected 'pkgname==pkgver but got: '{pkg}")
+            to_pkgs.append(pkg_ver_split[0])
+    with NamedTemporaryFile("w", prefix="requirements-", suffix=".txt") as req:
+        req.write("\n".join(to_pkgs) + "\n")
+        req.flush()
+        if args.upgrade:
+            to_py_cmd(
+                "-m", "pip", "install", "-U", "-r", req.name, stdout=sys.stdout, stderr=sys.stderr
+            )
+        else:
+            to_py_cmd("-m", "pip", "install", "-r", req.name, stdout=sys.stdout, stderr=sys.stderr)
     return 0
 
 
@@ -150,7 +196,7 @@ def main() -> int:
         args = get_arg_parser().parse_args()
         return real_main(args)
     except Exception:
-        log.exception(f"Received an unexpected exception when running {program_name}")
+        logger.exception(f"Received an unexpected exception when running {program_name}")
         return 1
     except KeyboardInterrupt:
         return 0

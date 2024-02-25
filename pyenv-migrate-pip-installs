@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+
+import argparse
+import logging
+import shutil
+import subprocess
+import sys
+from collections.abc import Sequence
+from os import PathLike, environ
+from typing import Any, Final, Protocol, runtime_checkable
+
+from rich import print
+from rich.console import Console
+from rich.logging import RichHandler
+
+program_name: Final[str] = "pyenv-migrate-pip-installs"
+
+
+LOG_FORMAT = "%(message)s"
+logging.basicConfig(
+    level=logging.WARNING,
+    format=LOG_FORMAT,
+    datefmt="[%X]",
+    handlers=[RichHandler(console=Console(stderr=True), rich_tracebacks=True)],
+)
+log = logging.getLogger(program_name)
+
+RunArg = str | bytes | PathLike[str] | PathLike[bytes]
+RunArgs = RunArg | Sequence[RunArg]
+StdRes = str | bytes | None
+RunEnv = dict[str, str] | None
+
+
+class CompletedProcessWithOut(subprocess.CompletedProcess):
+    out: str | None
+
+    def __init__(
+        self, args: RunArgs, returncode: int, stdout: StdRes = None, stderr: StdRes = None
+    ):
+        super().__init__(args, returncode, stdout=stdout, stderr=stderr)
+        self.out = None
+        if isinstance(self.stdout, bytes):
+            try:
+                self.out = self.stdout.decode()
+            except UnicodeDecodeError:
+                pass
+        else:
+            self.out = self.stdout
+
+    def __repr__(self) -> str:
+        orig: str = super().__repr__()
+        orig = orig.removesuffix(")")
+        if self.out is not None:
+            return f"{orig}, out={repr(self.out)})"
+        else:
+            return f"{orig}, out=None)"
+
+
+def run_cmd(
+    *args: RunArg, env: RunEnv = None, log: bool = False, **kwargs: dict[str, Any]
+) -> CompletedProcessWithOut:
+    args = (*args,)
+    if log:
+        print(f"Running: {' '.join(map(str, args))}", file=sys.stderr)
+    if set(kwargs.keys()).isdisjoint({"stdin", "stdout"}):
+        kwargs["capture_output"] = True
+    else:
+        kwargs["capture_output"] = False
+    if env is not None:
+        new_env = environ.copy()
+        new_env.update(env)
+        env = new_env
+    r = subprocess.run(tuple(map(str, args)), env=env, **kwargs)
+    if r.returncode:
+        if r.stdout is not None:
+            if isinstance(r.stdout, str):
+                sys.stdout.write(r.stdout)
+            else:
+                sys.stdout.buffer.write(r.stdout)
+        if r.stderr is not None:
+            if isinstance(r.stderr, str):
+                sys.stderr.write(r.stderr)
+            else:
+                sys.stderr.buffer.write(r.stderr)
+        raise subprocess.CalledProcessError(r.returncode, args, r.stdout, r.stderr)
+    return CompletedProcessWithOut(r.args, r.returncode, stdout=r.stdout, stderr=r.stderr)
+
+
+@runtime_checkable
+class CmdResult(Protocol):
+    def __call__(
+        self, *args: RunArg, env: RunEnv, **kwargs: dict[str, Any]
+    ) -> CompletedProcessWithOut:
+        ...
+
+
+def gen_cmd(bin_name: str, log: bool = False) -> CmdResult:
+    bin_path = shutil.which(bin_name)
+    if bin_path is None:
+        raise FileNotFoundError(bin_name)
+
+    def cmd_runner(*args: RunArg, env: RunEnv, **kwargs: dict[str, Any]) -> CompletedProcessWithOut:
+        return run_cmd(bin_path, *args, env=env, log=log, **kwargs)
+
+    return cmd_runner
+
+
+pyenv = gen_cmd("pyenv")
+
+
+def is_version_available(ver: str) -> bool:
+    try:
+        pyenv(
+            "exec",
+            "python3",
+            "--version",
+            env={"PYENV_VERSION": ver},
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        log.exception(f"Error checking for pyenv Python version '{ver}")
+        return False
+    return True
+
+
+def get_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=program_name)
+    parser.add_argument("-v", "--verbose", action="store_true", help="be verbose")
+    parser.add_argument(
+        "from_version", help="pyenv Python version to copy pip installed packages from"
+    )
+    parser.add_argument("to_version", help="pyenv Python version to copy pip installed packages to")
+    return parser
+
+
+def real_main(args: argparse.Namespace) -> int:
+    verbose: Final[bool] = args.verbose
+    if verbose:
+        log.setLevel(logging.DEBUG)
+        log.info(f"{program_name}: verbose mode enabled")
+    for ver in (args.from_version, args.to_version):
+        if not is_version_available(ver):
+            raise ValueError(f"pyenv version '{ver}' is not installed")
+    return 0
+
+
+def main() -> int:
+    try:
+        args = get_arg_parser().parse_args()
+        return real_main(args)
+    except Exception:
+        log.exception(f"Received an unexpected exception when running {program_name}")
+        return 1
+    except KeyboardInterrupt:
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

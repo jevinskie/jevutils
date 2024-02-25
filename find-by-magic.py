@@ -13,7 +13,7 @@ m = magic.Magic(raw=True)
 def PathDir(string):
     path = Path(string)
     if not path.is_dir():
-        msg = "{} is not a directory".format(path)
+        msg = f"{path} is not a directory"
         raise argparse.ArgumentTypeError(msg)
     return path
 

@@ -95,8 +95,7 @@ def run_cmd(
 class CmdResult(Protocol):
     def __call__(
         self, *args: RunArg, env: RunEnv, **kwargs: dict[str, Any]
-    ) -> CompletedProcessWithOut:
-        ...
+    ) -> CompletedProcessWithOut: ...
 
 
 def gen_cmd(bin_name: str, log: bool = False) -> CmdResult:

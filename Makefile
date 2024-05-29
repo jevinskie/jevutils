@@ -1,4 +1,4 @@
-TARGETS := fsgetpath-util dsc-info nsdpi dump-fixups
+TARGETS := fsgetpath-util dsc-info nsdpi dump-fixups net-privesc
 
 ifeq ($(shell uname -s),Darwin)
 TARGETS += nsdpi dsc-info
@@ -29,3 +29,11 @@ dsc-info: dsc-info.cpp
 
 dump-fixups: dump-fixups.cpp
 	env PKG_CONFIG_PATH="$(shell brew --prefix)/opt/fmt/pkgconfig" $(CXX) -o $@ $^ $(CXX_FLAGS) $(shell pkg-config pkg-config --libs fmt --cflags)
+
+ifneq ($(shell uname -s),Darwin)
+NET_PRIVESC_C_FLAGS = $(C_FLAGS) -lcap-ng
+endif
+
+net-privesc: net-privesc.c
+	$(CC) -o $@ $^ $(NET_PRIVESC_C_FLAGS)
+	sudo chmod u+s $@

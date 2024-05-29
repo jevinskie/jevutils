@@ -2,4 +2,5 @@
 /fsgetpath-util
 /dsc-info
 /dump-fixups
+/net-privesc
 **/*.dSYM/

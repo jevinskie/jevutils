@@ -1,8 +1,8 @@
-// Copyright (c) 2022 Jevin Sweval <jevinsweval@gmail.com>
+// Copyright (c) 2022-2024 Jevin Sweval <jevinsweval@gmail.com>
 // SPDX-License-Identifier: BSD-2-Clause
 
-// gcc -o litex_privesc litex_privesc.c -lcap-ng
-// sudo setcap cap_net_admin,cap_net_raw+eip litex_privesc
+// gcc -o net-privesc net-privesc.c -lcap-ng
+// sudo setcap cap_net_raw,cap_net_bind_service,cap_net_broadcast,cap_bpf+eip net-privesc
 
 #include <errno.h>
 #include <libgen.h>
@@ -100,7 +100,8 @@ void add_ambcap(int ambcap) {
     capng_apply(CAPNG_SELECT_CAPS);
     res = prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, ambcap, 0, 0);
     if (res) {
-        error(2, res, "coudln't add ambcap %d to ambient set", ambcap);
+        error(2, res, "couldn't add ambcap %d a.k.a. %s to ambient set", ambcap,
+              capng_capability_to_name(ambcap));
     }
 }
 #endif
@@ -114,21 +115,21 @@ int main(int argc, char *const *argv) {
     }
 
 #ifdef __linux__
-#ifdef CAP_NET_BIND_SERVICE
-    add_ambcap(CAP_NET_BIND_SERVICE);
-#endif
-#ifdef CAP_NET_BROADCAST
-    add_ambcap(CAP_NET_BROADCAST);
-#endif
+// #ifdef CAP_NET_BIND_SERVICE
+//     add_ambcap(CAP_NET_BIND_SERVICE);
+// #endif
+// #ifdef CAP_NET_BROADCAST
+//     add_ambcap(CAP_NET_BROADCAST);
+// #endif
 #ifdef CAP_NET_ADMIN
     add_ambcap(CAP_NET_ADMIN);
 #endif
 #ifdef CAP_NET_RAW
     add_ambcap(CAP_NET_RAW);
 #endif
-#ifdef CAP_BPF
-    add_ambcap(CAP_NET_RAW);
-#endif
+// #ifdef CAP_BPF
+//     add_ambcap(CAP_NET_RAW);
+// #endif
 #endif
 
 #ifdef __linux__

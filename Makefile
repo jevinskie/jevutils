@@ -32,10 +32,16 @@ dump-fixups: dump-fixups.cpp
 
 ifneq ($(shell uname -s),Darwin)
 NET_PRIVESC_C_FLAGS = $(C_FLAGS) -lcap-ng
+NET_PRIVESC_GROUP = tcpdump
+NET_PRIVESC_SETCAP = sudo setcap cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_sys_admin,cap_bpf+eip $@
+else
+NET_PRIVESC_GROUP = root
+NET_PRIVESC_SETCAP =
 endif
 
 net-privesc: net-privesc.c
 	$(CC) -o $@ $^ $(NET_PRIVESC_C_FLAGS)
-	sudo chown root:root $@
+	sudo chown root:$(NET_PRIVESC_GROUP) $@
 	sudo chmod u+s $@
 	sudo chmod g+s $@
+	$(NET_PRIVESC_SETCAP)

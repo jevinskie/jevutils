@@ -36,4 +36,5 @@ endif
 
 net-privesc: net-privesc.c
 	$(CC) -o $@ $^ $(NET_PRIVESC_C_FLAGS)
+	sudo chown root:root $@
 	sudo chmod u+s $@

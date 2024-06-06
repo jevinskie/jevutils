@@ -3,13 +3,28 @@
 import argparse
 import sys
 
+from more_itertools import chunked
+
 parser = argparse.ArgumentParser()
 parser.add_argument("hex_bytes", metavar="HB", type=str, nargs="*", help="Hex byte")
 parser.add_argument("-i", "--stdin", action="store_true", help="Get bytes from stdin")
 parser.add_argument(
     "-b", "--stdin-binary", action="store_true", help="Specify that stdin is raw bytes"
 )
-parser.add_argument("-r", "--reverse", action="store_true", help="Reverse byte order")
+parser.add_argument(
+    "-r",
+    "--reverse",
+    action="count",
+    default=0,
+    help="Reverse byte order - can be repeated to invert option",
+)
+parser.add_argument(
+    "-c",
+    "--chunk",
+    type=lambda x: int(x, 0),
+    metavar="N",
+    help="Chunk ever N bytes during byte reversal",
+)
 parser.add_argument("-H", "--hex", action="store_true", help="Output a normalized hex string")
 parser.add_argument(
     "-x", "--hex-prefix", action="store_true", help="Output bytes seperated by ' 0x'"
@@ -28,8 +43,14 @@ if not args.stdin_binary:
 else:
     buf = sys.stdin.buffer.read()
 
-if args.reverse:
-    buf = buf[::-1]
+if bool(args.reverse % 2):
+    if args.chunk is not None:
+        rbuf = b""
+        for c in chunked(buf, args.chunk):
+            rbuf += bytes(c[::-1])
+        buf = rbuf
+    else:
+        buf = buf[::-1]
 if args.string:
     print(repr(buf)[1:])
 if args.output_binary:

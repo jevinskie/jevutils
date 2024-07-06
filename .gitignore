@@ -3,4 +3,5 @@
 /dsc-info
 /dump-fixups
 /net-privesc
+/byte-histogram
 **/*.dSYM/

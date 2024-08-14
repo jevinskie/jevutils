@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+import argparse
+import enum
+import gzip
+import io
+import zlib
+from typing import Any
+
+import attrs
+import whenever
+from construct import (
+    Byte,
+    Bytes,
+    CString,
+    Enum,
+    FlagsEnum,
+    Hex,
+    If,
+    Int16ul,
+    Int32ul,
+    Sequence,
+    Struct,
+    Tell,
+    this,
+)
+from path import Path
+from rich import print
+from rich.console import Console
+from rich.table import Table
+
+
+# Enums for better representation of specific fields
+class CompressionMethod(enum.IntEnum):
+    DEFLATE = 8
+
+
+class OperatingSystem(enum.IntEnum):
+    FAT_FILESYSTEM = 0
+    AMIGA = 1
+    VMS = 2
+    UNIX = 3
+    VM_CMS = 4
+    ATARI_TOS = 5
+    HPFS_FILESYSTEM = 6
+    MACINTOSH = 7
+    Z_SYSTEM = 8
+    CP_M = 9
+    TOPS_20 = 10
+    NTFS_FILESYSTEM = 11
+    QDOS = 12
+    ACORN_RISCOS = 13
+    UNKNOWN = 255
+
+
+class Flags(enum.IntFlag):
+    FTEXT = 1
+    FHCRC = 2
+    FEXTRA = 4
+    FNAME = 8
+    FCOMMENT = 16
+
+
+class ExtraFlags(enum.IntFlag):
+    FXSLOW = 2
+    FXFAST = 4
+
+
+GZIP_EXTRA_FIELD = Struct(
+    "si1" / Hex(Byte),
+    "si2" / Hex(Byte),
+    "sflen" / Hex(Int16ul),
+    "sfdata" / Hex(Bytes(this.sflen)),
+)
+
+# Gzip Header Specification
+GZIP_HEADER = Struct(
+    "id1" / Hex(Byte),
+    "id2" / Hex(Byte),
+    "cm" / Enum(Byte, CompressionMethod),
+    "flg" / FlagsEnum(Byte, Flags),
+    "mtime" / Int32ul,
+    "xfl" / Enum(Byte, ExtraFlags),
+    "os" / Enum(Byte, OperatingSystem),
+    "xlen" / If(this.flg.FEXTRA, Int16ul),
+    "extra" / If(this.flg.FEXTRA, Sequence(GZIP_EXTRA_FIELD, Bytes(this.xlen))),
+    "original_file_name" / If(this.flg.FNAME, CString("utf8")),
+    "comment" / If(this.flg.FCOMMENT, CString("utf8")),
+    "header_crc16" / If(this.flg.FHCRC, Int16ul),
+    "sizeof" / Tell,
+)
+
+GZIP_FOOTER = Struct("crc32" / Int32ul, "isize" / Int32ul)
+
+
+# Define Gzip Header as an attrs class for structured data
+@attrs.define
+class GzipExtraField:
+    si1: int
+    si2: int
+    sflen: int
+    sfdata: bytes
+
+
+# Define Gzip Header as an attrs class for structured data
+@attrs.define
+class GzipHeader:
+    sizeof: int
+    id1: int
+    id2: int
+    compression_method: CompressionMethod
+    flags: dict[Flags, Any]
+    modification_time: whenever.UTCDateTime
+    extra_flags: ExtraFlags
+    operating_system: OperatingSystem
+    extra: list[GzipExtraField] | None = None
+    original_file_name: str | None = None
+    comment: str | None = None
+    header_crc16: int | None = None
+
+
+# Define Gzip Footer as an attrs class for structured data
+@attrs.define
+class GzipFooter:
+    crc32: int
+    isize: int
+
+
+def parse_gzip_header(data: bytes) -> GzipHeader:
+    parsed = GZIP_HEADER.parse(data)
+
+    modification_time = whenever.UTCDateTime.from_timestamp(parsed.mtime)
+
+    extras = None
+    if parsed.flg.FEXTRA:
+        extras = []
+        for ef in parsed.extra:
+            extras.append(GzipExtraField(ef.si1, ef.si2, ef.sflen, ef.sfdata))
+
+    header_crc16 = parsed.header_crc16 if parsed.flg.FHCRC else None
+
+    return GzipHeader(
+        sizeof=parsed.sizeof,
+        id1=parsed.id1,
+        id2=parsed.id2,
+        compression_method=parsed.cm,
+        flags=parsed.flg,
+        modification_time=modification_time,
+        extra_flags=parsed.xfl,
+        operating_system=parsed.os,
+        extra=extras,
+        original_file_name=parsed.original_file_name,
+        comment=parsed.comment,
+        header_crc16=header_crc16,
+    )
+
+
+def verify_header_crc(header_data: bytes, expected_crc16: int) -> bool:
+    """Verifies the header CRC16 against the expected value."""
+    calculated_crc16 = zlib.crc32(header_data) & 0xFFFF  # Get the lower 16 bits
+    return calculated_crc16 == expected_crc16
+
+
+def parse_gzip_footer(data: bytes) -> GzipFooter:
+    parsed = GZIP_FOOTER.parse(data)
+
+    return GzipFooter(
+        crc32=parsed.crc32,
+        isize=parsed.isize,
+    )
+
+
+def locate_gzip_footer(data: bytes) -> GzipFooter | None:
+    try:
+        decompressed_data = bytearray()
+        footer_offset: int | None = None
+        fobj = io.BytesIO(data)
+        with gzip.GzipFile(fileobj=fobj) as gz:
+            while True:
+                chunk = gz.read(1024)  # Read chunks of the decompressed data
+                if not chunk:
+                    footer_offset = gz.tell()
+                    break
+                decompressed_data.extend(chunk)
+
+        # Verify the CRC32 and ISIZE
+        calculated_crc32 = zlib.crc32(decompressed_data) & 0xFFFFFFFF
+        calculated_isize = len(decompressed_data)
+
+        footer_offset = fobj.tell() - 8  # Footer is 8 bytes long
+        footer_data = data[footer_offset : footer_offset + 8]
+        footer = parse_gzip_footer(footer_data)
+
+        # Compare calculated and footer CRC32 and ISIZE
+        if calculated_crc32 != footer.crc32:
+            print(
+                f"[yellow]Warning: CRC32 mismatch: calculated {calculated_crc32:#010x}, footer {footer.crc32:#010x}[/yellow]"
+            )
+        if calculated_isize != footer.isize:
+            print(
+                f"[yellow]Warning: ISIZE mismatch: calculated {calculated_isize}, footer {footer.isize}[/yellow]"
+            )
+
+        return footer
+
+    except Exception as e:
+        print(f"[red]Error processing DEFLATE stream: {e}[/red]")
+        return None
+
+
+def display_gzip_metadata(
+    header: GzipHeader, footer: GzipFooter | None, header_data: bytes
+) -> None:
+    console = Console()
+    table = Table(title="Gzip File Metadata")
+
+    table.add_column("Field", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Value", style="magenta")
+
+    table.add_row("ID1", f"{header.id1:#04x}")
+    table.add_row("ID2", f"{header.id2:#04x}")
+    table.add_row("Compression Method", str(header.compression_method))
+    table.add_row("Flags", str(header.flags))
+    table.add_row("Modification Time", header.modification_time.common_iso8601())
+    table.add_row("Extra Flags", f"{int(header.extra_flags):#04x} a.k.a. {header.extra_flags}")
+    table.add_row("Operating System", str(header.operating_system))
+
+    if header.original_file_name:
+        table.add_row("Original File Name", header.original_file_name)
+    if header.comment:
+        table.add_row("Comment", header.comment)
+    if header.extra:
+        table.add_row("Extra Field", str(header.extra))
+    if header.header_crc16 is not None:
+        is_valid_crc = verify_header_crc(header_data, header.header_crc16)
+        table.add_row("Header CRC16", f"{header.header_crc16:#06x} (Valid: {is_valid_crc})")
+        if not is_valid_crc:
+            print("[yellow]Warning: Header CRC16 mismatch[/yellow]")
+
+    if footer:
+        table.add_row("CRC32", f"{footer.crc32:#010x}")
+        table.add_row("ISIZE", str(footer.isize))
+    else:
+        print("[yellow]Warning: Footer could not be parsed[/yellow]")
+
+    console.print(table)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Display the complete metadata of a gzip file.")
+    parser.add_argument("gzip_file", type=str, help="Path to the gzip file.")
+
+    args = parser.parse_args()
+
+    file_path = Path(args.gzip_file)
+
+    with file_path.open("rb") as f:
+        data = f.read()
+
+    header = parse_gzip_header(data)
+    header_length = header.sizeof
+
+    header_data = data[:header_length]
+    header = parse_gzip_header(header_data)  # Parse with full header length accounted
+
+    footer = locate_gzip_footer(data)
+
+    display_gzip_metadata(header, footer, header_data)
+
+
+if __name__ == "__main__":
+    main()

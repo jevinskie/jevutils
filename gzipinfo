@@ -123,6 +123,7 @@ class GzipHeader:
 class GzipFooter:
     crc32: int
     isize: int
+    decomp_size: int
 
 
 def parse_gzip_header(data: bytes) -> GzipHeader:
@@ -160,13 +161,10 @@ def verify_header_crc(header_data: bytes, expected_crc16: int) -> bool:
     return calculated_crc16 == expected_crc16
 
 
-def parse_gzip_footer(data: bytes) -> GzipFooter:
+def parse_gzip_footer(data: bytes, decomp_sz: int) -> GzipFooter:
     parsed = GZIP_FOOTER.parse(data)
 
-    return GzipFooter(
-        crc32=parsed.crc32,
-        isize=parsed.isize,
-    )
+    return GzipFooter(crc32=parsed.crc32, isize=parsed.isize, decomp_size=decomp_sz)
 
 
 def locate_gzip_footer(data: bytes) -> GzipFooter | None:
@@ -188,7 +186,7 @@ def locate_gzip_footer(data: bytes) -> GzipFooter | None:
 
         footer_offset = fobj.tell() - 8  # Footer is 8 bytes long
         footer_data = data[footer_offset : footer_offset + 8]
-        footer = parse_gzip_footer(footer_data)
+        footer = parse_gzip_footer(footer_data, len(decompressed_data))
 
         # Compare calculated and footer CRC32 and ISIZE
         if calculated_crc32 != footer.crc32:
@@ -239,6 +237,7 @@ def display_gzip_metadata(
     if footer:
         table.add_row("CRC32", f"{footer.crc32:#010x}")
         table.add_row("ISIZE", str(footer.isize))
+        table.add_row("DECOMP_SIZE", str(footer.decomp_size))
     else:
         print("[yellow]Warning: Footer could not be parsed[/yellow]")
 

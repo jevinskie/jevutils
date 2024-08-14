@@ -23,7 +23,7 @@ repos:
   - id: trailing-whitespace
     args: [--markdown-linebreak-ext=md]
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.13.0
+  rev: v2.14.0
   hooks:
   - id: pretty-format-yaml
     args: [--autofix, --indent, '2']
@@ -35,12 +35,12 @@ repos:
   - id: clang-format
     types_or: [c++, c, objective-c, objective-c++]
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.16.0
+  rev: v3.17.0
   hooks:
   - id: pyupgrade
     args: [--py311-plus]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.5.1
+  rev: v0.5.7
   hooks:
   - id: ruff
     args: [--fix, --exit-non-zero-on-fix, --show-fixes]

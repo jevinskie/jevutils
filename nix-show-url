@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+set -x
+
+# Parse arguments
+open_url=false
+while getopts "o" opt; do
+    case $opt in
+        o)
+            open_url=true
+            ;;
+        *)
+            echo "Usage: nix show-url [-o] <package-name>"
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+if [ -z "${1-}" ]; then
+    echo "Usage: nix show-url [-o] <package-name>"
+    exit 1
+fi
+
+package_name="$1"
+
+# Function to get the GitHub URL of a traditional Nix package definition
+get_traditional_url() {
+    local package_name="$1"
+
+    # Get the position of the package definition in nixpkgs
+    local position
+    position=$(nix-instantiate --eval -E "with import <nixpkgs> {}; ${package_name}.meta.position or (throw \"${package_name} not found\")" 2>/dev/null | tr -d '"')
+
+    # Extract the file path and line number from the position
+    local file_path
+    local line_number
+    file_path=$(echo "$position" | cut -d ':' -f 1)
+    line_number=$(echo "$position" | cut -d ':' -f 2)
+
+    # Get the URL of the nixpkgs repository and branch information
+    local nixpkgs_info
+    local repo_url
+    local branch
+    nixpkgs_info=$(nix-instantiate --eval -E 'builtins.fetchGit { url = (import <nixpkgs> {}).path; }' | grep -o "https://github.com/[^']*")
+    repo_url=$(echo "$nixpkgs_info" | cut -d '#' -f 1)
+    branch=$(echo "$nixpkgs_info" | cut -d '#' -f 2)
+
+    # Construct the GitHub URL
+    echo "$repo_url/blob/$branch/$file_path#L$line_number"
+}
+
+# Function to get the GitHub URL of a flake-based package definition
+get_flake_url() {
+    local package_name="$1"
+
+    # Get the position of the package definition in the flake
+    local position
+    position=$(nix eval --raw ".#${package_name}.meta.position")
+
+    # Extract the file path and line number from the position
+    local file_path
+    local line_number
+    file_path=$(echo "$position" | cut -d ':' -f 1)
+    line_number=$(echo "$position" | cut -d ':' -f 2)
+
+    # Get the URL of the flake repository and branch information
+    local flake_url
+    local flake_info
+    local repo_url
+    local branch
+    flake_url=$(nix flake metadata --json . | jq -r ".url")
+    flake_info=$(echo "$flake_url" | grep -o "https://github.com/[^']*")
+    repo_url=$(echo "$flake_info" | cut -d '#' -f 1)
+    branch=$(echo "$flake_info" | cut -d '#' -f 2)
+
+    # Construct the GitHub URL
+    echo "$repo_url/blob/$branch/$file_path#L$line_number"
+}
+
+# Determine if the package is from a flake or traditional Nixpkgs
+if nix eval ".#${package_name}" &>/dev/null; then
+    url=$(get_flake_url "$package_name")
+else
+    url=$(get_traditional_url "$package_name")
+fi
+
+if $open_url; then
+    echo "Opening URL: $url"
+    open "$url"  # For macOS, use 'xdg-open' for Linux
+else
+    echo "$url"
+fi

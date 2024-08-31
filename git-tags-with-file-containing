@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Enable strict mode
+set -euo pipefail
+
+# Function to display usage information
+usage() {
+    echo "Usage: git-tags-with-file-containing <file path> <regex pattern>"
+    exit 1
+}
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 2 ]; then
+    echo "Error: Incorrect number of arguments."
+    usage
+fi
+
+# Assign arguments to variables
+file_to_search="$1"
+line_to_find="$2"
+
+# Check if the script is being run in a Git repository
+if ! git rev-parse --is-inside-work-tree &> /dev/null; then
+    echo "Error: This script must be run inside a Git repository."
+    exit 1
+fi
+
+# Initialize a flag to check if any matching tags are found
+found_any=false
+
+# Loop through all tags
+for tag in $(git tag); do
+    # Get the blob object ID for the file at the specific tag
+    blob_id=$(git ls-tree -r "$tag" --name-only | grep "^$file_to_search\$" | xargs -I {} git rev-parse "$tag:{}" 2>/dev/null || true)
+
+    # If the file exists in this tag
+    if [ -n "$blob_id" ]; then
+        # Search for the line in the file's content using regex
+        if git cat-file blob "$blob_id" | grep -qE "$line_to_find"; then
+            echo "$tag"
+            found_any=true
+        fi
+    fi
+done
+
+# If no tags contain the line, provide feedback
+if [ "$found_any" = false ]; then
+    echo "No tags contain a line matching the regex '$line_to_find' in file '$file_to_search'."
+fi

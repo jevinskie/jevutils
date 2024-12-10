@@ -11,12 +11,17 @@ CXX_FLAGS := $(C_CXX_FLAGS) -std=gnu++2b
 
 all: $(TARGETS)
 
-
-.PHONY: clean
+.PHONY: clean compile_commands.json scan tidy
 
 clean:
 	rm -rf *.dSYM/
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) compile_commands.json
+
+compile_commands.json:
+	bear -- $(MAKE) -B -f $(MAKEFILE_LIST)
+
+scan:
+	scan-build -V $(MAKE) -B -f $(MAKEFILE_LIST)
 
 %: %.c
 	$(CC) -o $@ $^ $(C_FLAGS)
@@ -30,9 +35,6 @@ clean:
 nsdpi: nsdpi.m
 	$(CC) -o $@ $^ $(OBJC_FLAGS) -framework Foundation -framework AppKit
 
-fsgetpath-util: fsgetpath-util.cpp
-	$(CXX) -o $@ $^ $(CXX_FLAGS)
-
 dsc-info: dsc-info.cpp
 	$(CXX) -o $@ $^ $(CXX_FLAGS) -arch x86_64 -arch arm64 -arch arm64e
 
@@ -44,7 +46,7 @@ NET_PRIVESC_C_FLAGS = $(C_FLAGS) -lcap-ng
 NET_PRIVESC_GROUP = tcpdump
 NET_PRIVESC_SETCAP = sudo setcap cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_sys_admin,cap_bpf+eip $@
 else
-NET_PRIVESC_GROUP = wheel
+NET_PRIVESC_GROUP = admin
 NET_PRIVESC_SETCAP =
 endif
 
@@ -54,9 +56,7 @@ net-privesc: net-privesc.c
 	sudo chmod u+s $@
 	sudo chmod g+s $@
 	$(NET_PRIVESC_SETCAP)
-
-byte-histogram: byte-histogram.c
-	$(CC) -o $@ $^ $(C_FLAGS)
+	sudo -k
 
 jevxcselect: jevxcselect.c
 	$(CC) -o $@ $^ $(C_FLAGS) -lxcselect

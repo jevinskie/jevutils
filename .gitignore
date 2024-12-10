@@ -6,4 +6,6 @@
 /byte-histogram
 /env-var-path-search
 /jevxcselect
+/compile_commands.json
+/.ruff_cache/
 **/*.dSYM/

@@ -4,7 +4,7 @@ ifeq ($(shell uname -s),Darwin)
 TARGETS += nsdpi dsc-info jevxcselect
 endif
 
-C_CXX_FLAGS := -Wall -Wextra -Wpedantic -I 3rdparty/optparse-wrapper
+C_CXX_FLAGS := -g -Wall -Wextra -Wpedantic -Wno-nullability-extension -I 3rdparty/optparse-wrapper
 C_FLAGS := $(C_CXX_FLAGS) -std=gnu2x
 OBJC_FLAGS := $(C_FLAGS) -fobjc-arc
 CXX_FLAGS := $(C_CXX_FLAGS) -std=gnu++2b
@@ -58,6 +58,7 @@ NET_PRIVESC_SETCAP =
 endif
 
 net-privesc: net-privesc.c
+	rm -f $@
 	$(CC) -o $@ $^ $(NET_PRIVESC_C_FLAGS)
 ifneq ($(RUNNING_BEAR),1)
 	sudo chown root:$(NET_PRIVESC_GROUP) $@

@@ -15,10 +15,10 @@
 #include <assert.h>
 
 #define FALLBACK_TERM_WIDTH 80
-#define MAX_TERM_WIDTH 1024
-#define COUNT_NUM_DIGITS 5
-#define STR(x) #x
-#define XSTR(x) STR(x)
+#define MAX_TERM_WIDTH      1024
+#define COUNT_NUM_DIGITS    5
+#define STR(x)              #x
+#define XSTR(x)             STR(x)
 
 static uint8_t *slurp_file(const char *path, size_t *sz_ptr) {
     if (!path) {
@@ -26,8 +26,7 @@ static uint8_t *slurp_file(const char *path, size_t *sz_ptr) {
         exit(2);
     }
     if (!sz_ptr) {
-        fprintf(stderr,
-                "slurp_file provided with NULL sz_ptr. You really probably want the size...\n");
+        fprintf(stderr, "slurp_file provided with NULL sz_ptr. You really probably want the size...\n");
         exit(3);
     }
     errno    = 0;
@@ -42,24 +41,24 @@ static uint8_t *slurp_file(const char *path, size_t *sz_ptr) {
     const int fseek_end_res = fseek(fh, 0, SEEK_END);
     if (fseek_end_res) {
         const int fseek_end_errno = errno;
-        fprintf(stderr, "Couldn't seek to end of '%s' for slurping. errno: %d a.k.a. %s\n", path,
-                fseek_end_errno, strerror(fseek_end_errno));
+        fprintf(stderr, "Couldn't seek to end of '%s' for slurping. errno: %d a.k.a. %s\n", path, fseek_end_errno,
+                strerror(fseek_end_errno));
         exit(5);
     }
     errno                = 0;
     const long ftell_res = ftell(fh);
     if (ftell_res < 0) {
         const int ftell_errno = errno;
-        fprintf(stderr, "Couldn't ftell on '%s' for slurping. errno: %d a.k.a. %s\n", path,
-                ftell_errno, strerror(ftell_errno));
+        fprintf(stderr, "Couldn't ftell on '%s' for slurping. errno: %d a.k.a. %s\n", path, ftell_errno,
+                strerror(ftell_errno));
         exit(6);
     }
     errno = 0;
     rewind(fh);
     const int rewind_errno = errno;
     if (rewind_errno) {
-        fprintf(stderr, "Couldn't rewind on '%s' for slurping. errno: %d a.k.a. %s\n", path,
-                rewind_errno, strerror(rewind_errno));
+        fprintf(stderr, "Couldn't rewind on '%s' for slurping. errno: %d a.k.a. %s\n", path, rewind_errno,
+                strerror(rewind_errno));
         exit(7);
     }
     const size_t sz = (size_t)ftell_res;
@@ -67,9 +66,8 @@ static uint8_t *slurp_file(const char *path, size_t *sz_ptr) {
     uint8_t *buf    = malloc(sz);
     if (!buf) {
         const int malloc_errno = errno;
-        fprintf(stderr,
-                "Couldn't malloc buffer of size %zu for '%s' for slurping. errno: %d a.k.a. %s\n",
-                sz, path, malloc_errno, strerror(malloc_errno));
+        fprintf(stderr, "Couldn't malloc buffer of size %zu for '%s' for slurping. errno: %d a.k.a. %s\n", sz, path,
+                malloc_errno, strerror(malloc_errno));
         exit(8);
     }
     errno                  = 0;
@@ -90,9 +88,8 @@ static uint8_t *slurp_file(const char *path, size_t *sz_ptr) {
     if (fclose_res) {
         const int fclose_errno = errno;
         const char *fclose_str = fclose_res ? "IS_EOF" : "IS_ZERO";
-        fprintf(stderr,
-                "Couldn't fclose(fh) of '%s' for slurping!? fclose res: %s errno: %d a.k.a. %s\n",
-                path, fclose_str, fclose_errno, strerror(fclose_errno));
+        fprintf(stderr, "Couldn't fclose(fh) of '%s' for slurping!? fclose res: %s errno: %d a.k.a. %s\n", path,
+                fclose_str, fclose_errno, strerror(fclose_errno));
         free(buf);
         exit(10);
     }
@@ -157,8 +154,7 @@ static void display_byte_histogram(const char *const path) {
         } else {
             char_buf = nonprint_char_buf;
         }
-        wprintf(L"%02hhx %s [%" XSTR(COUNT_NUM_DIGITS) PRIu64 "]: %ls\n", i, char_buf,
-                byte_counts[i], bar_buf);
+        wprintf(L"%02hhx %s [%" XSTR(COUNT_NUM_DIGITS) PRIu64 "]: %ls\n", i, char_buf, byte_counts[i], bar_buf);
     }
 }
 

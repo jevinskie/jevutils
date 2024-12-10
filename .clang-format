@@ -1,8 +1,9 @@
 BasedOnStyle: LLVM
+Standard: Latest
 IndentWidth: 4
-TabWidth: 4
+ObjCBlockIndentWidth: 4
 UseTab: Never
-ColumnLimit: 100
+ColumnLimit: 120
 AccessModifierOffset: -4
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: Empty
@@ -12,3 +13,5 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: false
 AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignEscapedNewlines: LeftWithLastLine

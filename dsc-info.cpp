@@ -41,19 +41,16 @@ int main(int argc, const char **argv) {
     }
     task_dyld_info_data_t dyld_info;
     mach_msg_type_number_t dyld_info_cnt = TASK_DYLD_INFO_COUNT;
-    const auto kr =
-        task_info(mach_task_self(), TASK_DYLD_INFO, (task_info_t)&dyld_info, &dyld_info_cnt);
+    const auto kr = task_info(mach_task_self(), TASK_DYLD_INFO, (task_info_t)&dyld_info, &dyld_info_cnt);
     if (kr != KERN_SUCCESS) {
         fprintf(stderr,
-                "Got Mach error: 0x%08" PRIx32
-                " description: '%s' when calling task_info() for TASK_DYLD_INFO\n",
-                kr, mach_error_string(kr));
+                "Got Mach error: 0x%08" PRIx32 " description: '%s' when calling task_info() for TASK_DYLD_INFO\n", kr,
+                mach_error_string(kr));
         return 2;
     }
     if (dyld_info.all_image_info_format != TASK_DYLD_ALL_IMAGE_INFO_64) {
         fprintf(stderr,
-                "dyld_all_image_infos format is 0x%08" PRIx32
-                " and I can only handle TASK_DYLD_ALL_IMAGE_INFO_64\n",
+                "dyld_all_image_infos format is 0x%08" PRIx32 " and I can only handle TASK_DYLD_ALL_IMAGE_INFO_64\n",
                 dyld_info.all_image_info_format);
         return 3;
     }
@@ -103,8 +100,7 @@ int main(int argc, const char **argv) {
         printf("\t\timageUUID: "
                "%02hhX%02hhX%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX%02hhX%"
                "02hhX%02hhX%02hhX\n",
-               u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7], u[8], u[9], u[10], u[11], u[12],
-               u[13], u[14], u[15]);
+               u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7], u[8], u[9], u[10], u[11], u[12], u[13], u[14], u[15]);
     }
     if (version < 9) {
         return 0;
@@ -132,8 +128,8 @@ int main(int argc, const char **argv) {
     printf("sharedCacheUUID: "
            "%02hhX%02hhX%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX%02hhX%"
            "02hhX%02hhX%02hhX\n",
-           scu[0], scu[1], scu[2], scu[3], scu[4], scu[5], scu[6], scu[7], scu[8], scu[9], scu[10],
-           scu[11], scu[12], scu[13], scu[14], scu[15]);
+           scu[0], scu[1], scu[2], scu[3], scu[4], scu[5], scu[6], scu[7], scu[8], scu[9], scu[10], scu[11], scu[12],
+           scu[13], scu[14], scu[15]);
     if (version < 15) {
         return 0;
     }
@@ -147,8 +143,7 @@ int main(int argc, const char **argv) {
     if (version < 16) {
         return 0;
     }
-    printf("compact_dyld_image_info_addr: 0x%016" PRIx64 "\n",
-           (uint64_t)infos->compact_dyld_image_info_addr);
+    printf("compact_dyld_image_info_addr: 0x%016" PRIx64 "\n", (uint64_t)infos->compact_dyld_image_info_addr);
     printf("compact_dyld_image_info_size: %zu\n", infos->compact_dyld_image_info_size);
     printf("platform: 0x%08" PRIx32 "\n", infos->platform);
     if (version < 17) {
@@ -168,9 +163,9 @@ int main(int argc, const char **argv) {
                "%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%"
                "02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX%"
                "02hhX%02hhX%02hhX%02hhX%02hhX%02hhX\n",
-               k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7], k[8], k[9], k[10], k[11], k[12],
-               k[13], k[14], k[15], k[16], k[17], k[18], k[19], k[20], k[21], k[22], k[23], k[24],
-               k[25], k[26], k[27], k[28], k[29], k[30], k[31]);
+               k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7], k[8], k[9], k[10], k[11], k[12], k[13], k[14], k[15],
+               k[16], k[17], k[18], k[19], k[20], k[21], k[22], k[23], k[24], k[25], k[26], k[27], k[28], k[29], k[30],
+               k[31]);
     }
     printf("aotInfoArrayChangeTimestamp: %" PRIu64 "\n", infos->aotInfoArrayChangeTimestamp);
     printf("aotSharedCacheBaseAddress: %p\n", (void *)(void *)infos->aotSharedCacheBaseAddress);
@@ -178,35 +173,33 @@ int main(int argc, const char **argv) {
     printf("aotSharedCacheUUID: "
            "%02hhX%02hhX%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX%02hhX%"
            "02hhX%02hhX%02hhX\n",
-           au[0], au[1], au[2], au[3], au[4], au[5], au[6], au[7], au[8], au[9], au[10], au[11],
-           au[12], au[13], au[14], au[15]);
+           au[0], au[1], au[2], au[3], au[4], au[5], au[6], au[7], au[8], au[9], au[10], au[11], au[12], au[13], au[14],
+           au[15]);
 #endif
     if (version < 18) {
         // return 0;
     }
-    printf("sharedCacheFSID: 0x%016" PRIx64 " (%" PRIu64 ")\n", infos->sharedCacheFSID,
-           infos->sharedCacheFSID);
+    printf("sharedCacheFSID: 0x%016" PRIx64 " (%" PRIu64 ")\n", infos->sharedCacheFSID, infos->sharedCacheFSID);
     printf("sharedCacheFSObjID: 0x%016" PRIx64 " (%" PRIu64 ")\n", infos->sharedCacheFSObjID,
            infos->sharedCacheFSObjID);
-    char sc_path[8 * 1024]     = {};
-    errno                      = 0;
-    const auto fs_get_path_res = fsgetpath(
-        sc_path, sizeof(sc_path), (fsid_t *)&infos->sharedCacheFSID, infos->sharedCacheFSObjID);
+    char sc_path[8 * 1024] = {};
+    errno                  = 0;
+    const auto fs_get_path_res =
+        fsgetpath(sc_path, sizeof(sc_path), (fsid_t *)&infos->sharedCacheFSID, infos->sharedCacheFSObjID);
     if (fs_get_path_res < 0 || errno) {
         const auto e = errno;
         fprintf(stderr,
-                "fsgetpath for dyld_shared_cache fsid: 0x%016" PRIx64 " (%" PRIu64
-                ") obj_id: 0x%016" PRIx64 " (%" PRIu64 ") failed.\nerrno: %d a.k.a. %s\n",
-                infos->sharedCacheFSID, infos->sharedCacheFSID, infos->sharedCacheFSObjID,
-                infos->sharedCacheFSObjID, e, strerror(e));
+                "fsgetpath for dyld_shared_cache fsid: 0x%016" PRIx64 " (%" PRIu64 ") obj_id: 0x%016" PRIx64
+                " (%" PRIu64 ") failed.\nerrno: %d a.k.a. %s\n",
+                infos->sharedCacheFSID, infos->sharedCacheFSID, infos->sharedCacheFSObjID, infos->sharedCacheFSObjID, e,
+                strerror(e));
         return 4;
     }
     if (fs_get_path_res >= 0 && fs_get_path_res < 2) {
         fprintf(stderr,
-                "fsgetpath for dyld_shared_cache fsid: 0x%016" PRIx64 " (%" PRIu64
-                ") obj_id: 0x%016" PRIx64 " (%" PRIu64 ") returned an empty path.\n",
-                infos->sharedCacheFSID, infos->sharedCacheFSID, infos->sharedCacheFSObjID,
-                infos->sharedCacheFSObjID);
+                "fsgetpath for dyld_shared_cache fsid: 0x%016" PRIx64 " (%" PRIu64 ") obj_id: 0x%016" PRIx64
+                " (%" PRIu64 ") returned an empty path.\n",
+                infos->sharedCacheFSID, infos->sharedCacheFSID, infos->sharedCacheFSObjID, infos->sharedCacheFSObjID);
         return 5;
     }
     printf("sharedCache path: '%s'\n", maybe_null_str(sc_path));

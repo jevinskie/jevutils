@@ -100,8 +100,7 @@ void add_ambcap(int ambcap) {
     capng_apply(CAPNG_SELECT_CAPS);
     res = prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, ambcap, 0, 0);
     if (res) {
-        error(2, res, "couldn't add ambcap %d a.k.a. %s to ambient set", ambcap,
-              capng_capability_to_name(ambcap));
+        error(2, res, "couldn't add ambcap %d a.k.a. %s to ambient set", ambcap, capng_capability_to_name(ambcap));
     }
 }
 #endif
@@ -110,8 +109,7 @@ int main(int argc, char *const *argv) {
     int res = -1;
 
     if (argc < 2) {
-        error(3, ENOENT, "must provide a binary, e.g. %s <full path to run binary>",
-              dirname(strdup(argv[0])));
+        error(3, ENOENT, "must provide a binary, e.g. %s <full path to run binary>", dirname(strdup(argv[0])));
     }
 
 #ifdef __linux__

@@ -15,10 +15,8 @@ using lc_t = const struct load_command *;
 
 class Segment {
 public:
-    Segment(uint64_t start, uint64_t sz, const char *segname)
-        : start{start}, end{start + sz}, segname_{} {
-        std::memcpy((char *)segname_, segname,
-                    std::min(strnlen(segname, sizeof(segname_)), sizeof(segname_)));
+    Segment(uint64_t start, uint64_t sz, const char *segname) : start{start}, end{start + sz}, segname_{} {
+        std::memcpy((char *)segname_, segname, std::min(strnlen(segname, sizeof(segname_)), sizeof(segname_)));
     };
     uint64_t size() const {
         return end - start;
@@ -27,8 +25,7 @@ public:
         return segname_;
     }
     std::string_view segname() const {
-        return std::string_view(segname_,
-                                std::min(strnlen(segname_, sizeof(segname_)), sizeof(segname_)));
+        return std::string_view(segname_, std::min(strnlen(segname_, sizeof(segname_)), sizeof(segname_)));
     }
     const uint64_t start{};
     const uint64_t end{};
@@ -39,16 +36,14 @@ class Section : Segment {
 public:
     Section(uint64_t start, uint64_t sz, const char *segname, const char *sectname)
         : Segment{start, sz, segname}, sectname_{} {
-        std::memcpy((char *)sectname_, sectname,
-                    std::min(strnlen(sectname, sizeof(sectname_)), sizeof(sectname_)));
+        std::memcpy((char *)sectname_, sectname, std::min(strnlen(sectname, sizeof(sectname_)), sizeof(sectname_)));
     };
     Section(uint64_t start, uint64_t sz, const char *segname) = delete;
     std::string sectname_str() const {
         return sectname_;
     };
     std::string_view sectname() const {
-        return std::string_view(sectname_,
-                                std::min(strnlen(sectname_, sizeof(sectname_)), sizeof(sectname_)));
+        return std::string_view(sectname_, std::min(strnlen(sectname_, sizeof(sectname_)), sizeof(sectname_)));
     }
 
 private:

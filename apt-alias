@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import argparse
+import shutil
+import subprocess
+
+from path import Path, TempDir
+
+
+def create_dummy_package(alias_target: str, alias_source: str, keep_temps: bool) -> Path:
+    # Create the output directory if it doesn't exist
+    output_dir = Path.home() / ".aliased-debs"
+    output_dir.makedirs_p()
+
+    # Prepare the output deb file name
+    output_deb_name = f"{alias_target}-aliasing-{alias_source}.deb"
+    output_deb_path = output_dir / output_deb_name
+
+    # Create a temporary directory for equivs files using path.TempDir
+    with TempDir(suffix=f"_equivs_{alias_target}_to_{alias_source}") as temp_dir:
+        control_file = temp_dir / "control"
+
+        # Write the control file
+        control_file.write_text(f"""Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+
+Package: {alias_target}
+Provides: {alias_source}
+Description: Dummy package to satisfy {alias_source} dependency with {alias_target}
+""")
+
+        # Build the dummy package using equivs
+        subprocess.run(["equivs-build", control_file], check=True, cwd=temp_dir)
+
+        # Find the generated .deb file
+        generated_deb = next(temp_dir.glob("*.deb"))
+        shutil.copy(generated_deb, output_deb_path)
+
+        if keep_temps:
+            print(f"Temporary directory kept at {temp_dir}")
+        else:
+            print(f"Temporary directory cleaned up: {temp_dir}")
+
+    print(f"Dummy package created at: {output_deb_path}")
+    return output_deb_path
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Create a dummy Debian package for dependency aliasing."
+    )
+    parser.add_argument("alias_target", help="The target package name to alias.")
+    parser.add_argument("alias_source", help="The source package name to be aliased.")
+    parser.add_argument("-k", "--keep-temps", action="store_true", help="Keep temporary files.")
+
+    args = parser.parse_args()
+
+    create_dummy_package(args.alias_target, args.alias_source, args.keep_temps)
+
+
+if __name__ == "__main__":
+    main()

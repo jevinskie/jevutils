@@ -1,4 +1,4 @@
-TARGETS := fsgetpath-util dsc-info nsdpi dump-fixups net-privesc byte-histogram
+TARGETS := fsgetpath-util dsc-info nsdpi dump-fixups net-privesc byte-histogram dump-argv
 
 ifeq ($(shell uname -s),Darwin)
 TARGETS += nsdpi dsc-info

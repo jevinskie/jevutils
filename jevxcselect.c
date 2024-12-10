@@ -142,12 +142,14 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+#if 0
     printf("sdkname: '%s'\n", sdkname);
     printf("verbose: %s\n", BOOLSTR(verbose));
     printf("do_sdkpath: %s\n", BOOLSTR(do_sdkpath));
     printf("do_devpath: %s\n", BOOLSTR(do_devpath));
     printf("do_manpath: %s\n", BOOLSTR(do_manpath));
     printf("do_version: %s\n", BOOLSTR(do_version));
+#endif
 
     if (do_sdkpath) {
         print_sdkpath(sdk);

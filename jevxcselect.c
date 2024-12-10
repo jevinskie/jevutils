@@ -3,10 +3,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <unistd.h>
+
+#include <optparse.h>
 
 static void print_usage(void) {
-    fprintf(stderr, "usage: jevxcselect [-sdkpath [sdk]] \n");
+    fprintf(stderr, "usage: jevxcselect [-sdk TYPE] [-sdkpath] \n");
 }
 
 int main(int argc, const char **argv) {

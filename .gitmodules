@@ -1,0 +1,3 @@
+[submodule "3rdparty/optparse"]
+	path = 3rdparty/optparse
+	url = https://github.com/skeeto/optparse

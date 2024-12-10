@@ -59,21 +59,21 @@ int main(int argc, const char **argv) {
     }
     const auto infos   = (dyld_all_image_infos_t *)dyld_info.all_image_info_addr;
     const auto version = infos->version;
-    printf("dyld_all_image_infos address: %p\n", infos);
+    printf("dyld_all_image_infos address: %p\n", (void *)infos);
     printf("version: %" PRIu32 "\n", version);
     printf("infoArrayCount: %" PRIu32 "\n", infos->infoArrayCount);
-    printf("infoArray: %p\n", infos->infoArray);
-    printf("notification: %p\n", infos->notification);
+    printf("infoArray: %p\n", (void *)infos->infoArray);
+    printf("notification: %p\n", (void *)infos->notification);
     printf("processDetachedFromSharedRegion: %d\n", infos->processDetachedFromSharedRegion);
     if (version < 2) {
         return 0;
     }
     printf("libSystemInitialized: %d\n", infos->libSystemInitialized);
-    printf("dyldImageLoadAddress: %p\n", infos->dyldImageLoadAddress);
+    printf("dyldImageLoadAddress: %p\n", (void *)infos->dyldImageLoadAddress);
     if (version < 3) {
         return 0;
     }
-    printf("jitInfo: %p\n", infos->jitInfo);
+    printf("jitInfo: %p\n", (void *)infos->jitInfo);
     if (version < 5) {
         return 0;
     }
@@ -83,7 +83,7 @@ int main(int argc, const char **argv) {
     if (version < 6) {
         return 0;
     }
-    printf("coreSymbolicationShmPage: %p\n", infos->coreSymbolicationShmPage);
+    printf("coreSymbolicationShmPage: %p\n", (void *)infos->coreSymbolicationShmPage);
     if (version < 7) {
         return 0;
     }
@@ -92,11 +92,11 @@ int main(int argc, const char **argv) {
         return 0;
     }
     printf("uuidArrayCount: %" PRIu64 "\n", (uint64_t)infos->uuidArrayCount);
-    printf("uuidArray: %p\n", infos->uuidArray);
+    printf("uuidArray: %p\n", (void *)infos->uuidArray);
     for (uintptr_t i = 0; i < infos->uuidArrayCount; ++i) {
         const auto uuid_info = infos->uuidArray[i];
         printf("\t[%" PRIu64 "]\n", (uint64_t)i);
-        printf("\t\timageLoadAddress: %p\n", uuid_info.imageLoadAddress);
+        printf("\t\timageLoadAddress: %p\n", (void *)uuid_info.imageLoadAddress);
         // example format: AA5A6FE0-9E4C-3611-9B8D-A4D55923C105
         // 4-2-2-2-6 bytes
         const auto u = uuid_info.imageUUID;
@@ -109,7 +109,7 @@ int main(int argc, const char **argv) {
     if (version < 9) {
         return 0;
     }
-    printf("dyldAllImageInfosAddress: %p\n", infos->dyldAllImageInfosAddress);
+    printf("dyldAllImageInfosAddress: %p\n", (void *)infos->dyldAllImageInfosAddress);
     if (version < 10) {
         return 0;
     }
@@ -156,12 +156,12 @@ int main(int argc, const char **argv) {
     }
 #ifdef IS_MACOS
     printf("aotInfoCount: %" PRIu32 "\n", infos->aotInfoCount);
-    printf("aotInfoArray: %p\n", infos->aotInfoArray);
+    printf("aotInfoArray: %p\n", (void *)infos->aotInfoArray);
     for (uint32_t i = 0; i < infos->aotInfoCount; ++i) {
         const auto aot_info = infos->aotInfoArray;
         printf("\t[%" PRIu32 "]\n", i);
-        printf("\t\tx86LoadAddress: %p\n", aot_info[i].x86LoadAddress);
-        printf("\t\taotLoadAddress: %p\n", aot_info[i].aotLoadAddress);
+        printf("\t\tx86LoadAddress: %p\n", (void *)aot_info[i].x86LoadAddress);
+        printf("\t\taotLoadAddress: %p\n", (void *)aot_info[i].aotLoadAddress);
         printf("\t\taotImageSize: 0x%016" PRIx64 "\n", aot_info[i].aotImageSize);
         const auto k = aot_info[i].aotImageKey;
         printf("\t\taotImageKey: "
@@ -173,7 +173,7 @@ int main(int argc, const char **argv) {
                k[25], k[26], k[27], k[28], k[29], k[30], k[31]);
     }
     printf("aotInfoArrayChangeTimestamp: %" PRIu64 "\n", infos->aotInfoArrayChangeTimestamp);
-    printf("aotSharedCacheBaseAddress: %p\n", (void *)infos->aotSharedCacheBaseAddress);
+    printf("aotSharedCacheBaseAddress: %p\n", (void *)(void *)infos->aotSharedCacheBaseAddress);
     const auto au = infos->aotSharedCacheUUID;
     printf("aotSharedCacheUUID: "
            "%02hhX%02hhX%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX-%02hhX%02hhX%02hhX%"

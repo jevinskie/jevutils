@@ -5,4 +5,5 @@
 /net-privesc
 /byte-histogram
 /env-var-path-search
+/jevxcselect
 **/*.dSYM/

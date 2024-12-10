@@ -1,13 +1,13 @@
-TARGETS := fsgetpath-util dsc-info nsdpi dump-fixups net-privesc byte-histogram dump-argv
+TARGETS := fsgetpath-util dump-fixups net-privesc byte-histogram env-var-path-search
 
 ifeq ($(shell uname -s),Darwin)
-TARGETS += nsdpi dsc-info
+TARGETS += nsdpi dsc-info jevxcselect
 endif
 
 C_CXX_FLAGS := -Wall -Wextra -Wpedantic
 C_FLAGS := $(C_CXX_FLAGS) -std=gnu2x
 OBJC_FLAGS := $(C_FLAGS) -fobjc-arc
-CXX_FLAGS := $(C_CXX_FLAGS) -std=gnu++20
+CXX_FLAGS := $(C_CXX_FLAGS) -std=gnu++2b
 
 all: $(TARGETS)
 
@@ -17,6 +17,15 @@ all: $(TARGETS)
 clean:
 	rm -rf *.dSYM/
 	rm -f $(TARGETS)
+
+%: %.c
+	$(CC) -o $@ $^ $(C_FLAGS)
+
+%: %.cpp
+	$(CXX) -o $@ $^ $(CXX_FLAGS)
+
+%: %.m
+	$(CC) -o $@ $^ $(OBJC_FLAGS) -framework Foundation
 
 nsdpi: nsdpi.m
 	$(CC) -o $@ $^ $(OBJC_FLAGS) -framework Foundation -framework AppKit
@@ -48,3 +57,6 @@ net-privesc: net-privesc.c
 
 byte-histogram: byte-histogram.c
 	$(CC) -o $@ $^ $(C_FLAGS)
+
+jevxcselect: jevxcselect.c
+	$(CC) -o $@ $^ $(C_FLAGS) -lxcselect

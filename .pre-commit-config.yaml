@@ -35,12 +35,12 @@ repos:
   - id: clang-format
     types_or: [c++, c, objective-c, objective-c++]
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.0
+  rev: v3.19.1
   hooks:
   - id: pyupgrade
     args: [--py311-plus]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.2
+  rev: v0.8.4
   hooks:
   - id: ruff
     args: [--fix, --exit-non-zero-on-fix, --show-fixes]

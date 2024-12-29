@@ -1,7 +1,7 @@
-TARGETS := fsgetpath-util dump-fixups net-privesc byte-histogram env-var-path-search
+TARGETS := dump-fixups net-privesc byte-histogram env-var-path-search
 
 ifeq ($(shell uname -s),Darwin)
-TARGETS += nsdpi dsc-info jevxcselect
+TARGETS += nsdpi dsc-info jevxcselect fsgetpath-util
 endif
 
 C_CXX_FLAGS := -g -Wall -Wextra -Wpedantic -Wno-nullability-extension -I 3rdparty/optparse-wrapper

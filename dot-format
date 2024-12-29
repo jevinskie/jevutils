@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+if [[ x"$2" == "x-" ]]; then
+    set -- "$1" "/dev/stdout"
+fi
+
+nop "$1" > "$2"

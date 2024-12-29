@@ -1,7 +1,13 @@
 #!/usr/bin/env sh
 
+set -x
+
+if [[ x"$1" == "x-" ]]; then
+    set -- "/dev/stdin" "$2"
+fi
+
 if [[ x"$2" == "x-" ]]; then
     set -- "$1" "/dev/stdout"
 fi
 
-nop "$1" > "$2"
+nop "$1" | sponge "$2"

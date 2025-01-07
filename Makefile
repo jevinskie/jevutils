@@ -1,4 +1,4 @@
-TARGETS := dump-fixups net-privesc byte-histogram env-var-path-search
+TARGETS := dump-fixups net-privesc byte-histogram env-var-path-search basenice
 
 ifeq ($(shell uname -s),Darwin)
 TARGETS += nsdpi dsc-info jevxcselect fsgetpath-util

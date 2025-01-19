@@ -12,7 +12,7 @@ def normalize_uuid(raw_uuid: str) -> str:
     # example format: AA5A6FE0-9E4C-3611-9B8D-A4D55923C105
     # 8-4-4-4-12 chars
     u = stripped_uuid
-    return f"{u[0:0+8]}-{u[8:8+4]}-{u[12:12+4]}-{u[16:16+4]}-{u[20:20+12]}"
+    return f"{u[0 : 0 + 8]}-{u[8 : 8 + 4]}-{u[12 : 12 + 4]}-{u[16 : 16 + 4]}-{u[20 : 20 + 12]}"
 
 
 class NormalizeUUIDTest(unittest.TestCase):

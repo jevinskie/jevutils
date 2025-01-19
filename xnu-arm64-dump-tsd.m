@@ -19,15 +19,30 @@
         (void **)tsd;                               \
     })
 
-static __attribute__((always_inline)) void **_os_tsd_get_base(void) {
+static __attribute__((always_inline, const)) void **_os_tsd_get_base(void) {
     uintptr_t tsd;
     __asm__("mrs %0, TPIDRRO_EL0" : "=r"(tsd));
 
     return (void **)tsd;
 }
 
+static __attribute__((always_inline, const)) void **_os_tsd_get_base_v2(void) {
+    return tsd_get_base();
+}
+
+__attribute__((always_inline, const)) void **_os_tsd_get_base_ns(void) {
+    uintptr_t tsd;
+    __asm__("mrs %0, TPIDRRO_EL0" : "=r"(tsd));
+
+    return (void **)tsd;
+}
+
+__attribute__((always_inline, const)) void **_os_tsd_get_base_v2_ns(void) {
+    return tsd_get_base();
+}
+
 static void dump_tsd(void) {
-    void **tsd_base = tsd_get_base();
+    void **tsd_base = _os_tsd_get_base();
     printf("tsd => %p\n", (void *)tsd_base);
     for (int i = 0; i < TSD_SZ; ++i) {
         printf("tsd[%3d]: %p\n", i, tsd_base[i]);

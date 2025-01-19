@@ -9,4 +9,5 @@
 /compile_commands.json
 /.ruff_cache/
 **/*.dSYM/
-basenice
+/basenice
+/xnu-arm64-dump-tsd

@@ -1,10 +1,10 @@
 TARGETS := dump-fixups net-privesc byte-histogram env-var-path-search basenice
 
 ifeq ($(shell uname -s),Darwin)
-TARGETS += nsdpi dsc-info jevxcselect fsgetpath-util
+TARGETS += nsdpi dsc-info jevxcselect fsgetpath-util xnu-arm64-dump-tsd
 endif
 
-C_CXX_FLAGS := -g -Wall -Wextra -Wpedantic -Wno-nullability-extension -I 3rdparty/optparse-wrapper
+C_CXX_FLAGS := -g -Wall -Wextra -Wpedantic -Wno-nullability-extension -Wno-gnu-statement-expression-from-macro-expansion -I 3rdparty/optparse-wrapper
 C_FLAGS := $(C_CXX_FLAGS) -std=gnu2x
 OBJC_FLAGS := $(C_FLAGS) -fobjc-arc
 CXX_FLAGS := $(C_CXX_FLAGS) -std=gnu++2b

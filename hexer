@@ -35,9 +35,11 @@ args = parser.parse_args()
 
 if not args.stdin_binary:
     if not args.stdin:
+        args.hex_bytes = [a.replace(",", "") for a in args.hex_bytes]
         hex_bytes_str = "".join([hbs.removeprefix("0x") for hbs in args.hex_bytes])
     else:
-        hex_bytes_str = "".join([hbs.removeprefix("0x") for hbs in sys.stdin.read().split()])
+        hba = [a.replace(",", "") for a in sys.stdin.read().split()]
+        hex_bytes_str = "".join([hbs.removeprefix("0x") for hbs in hba])
 
     buf = bytes.fromhex("".join([hbs.removeprefix("0x") for hbs in hex_bytes_str]))
 else:

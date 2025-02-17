@@ -1,4 +1,4 @@
-TARGETS := dump-fixups net-privesc byte-histogram env-var-path-search basenice
+TARGETS := dump-fixups net-privesc byte-histogram env-var-path-search basenice find-macho
 
 ifeq ($(shell uname -s),Darwin)
 TARGETS += nsdpi dsc-info jevxcselect fsgetpath-util xnu-arm64-dump-tsd
@@ -70,3 +70,6 @@ endif
 
 jevxcselect: jevxcselect.c
 	$(CC) -o $@ $^ $(C_FLAGS) -lxcselect
+
+find-macho: find-macho.cpp
+	$(CXX) -o $@ $^ $(CXX_FLAGS) -O3 -I 3rdparty/thread-pool/include

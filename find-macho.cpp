@@ -30,7 +30,7 @@ void check_macho(const fs::path &file_path, std::vector<fs::path> &machos, std::
     assert(4 == ::read(fd, &magic, sizeof(magic)));
     assert(!::close(fd));
     bool is_macho = false;
-    if constexpr (std::endian::native == std::endian::little) {
+    if constexpr (std::endian::native == std::endian::big) {
         is_macho |= magic == 0xfeedface; // 32-bit
         is_macho |= magic == 0xfeedfacf; // 64-bit
         is_macho |= magic == 0xcafebabe; // 32-bit fat

@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+
+"""
+A pure Python script to dump mount information on macOS using ctypes.
+"""
+
+import ctypes
+from ctypes import POINTER, Structure, c_char, c_int, c_int32, c_uint32, c_uint64, pointer
+
+
+# Define fsid_t structure
+class fsid_t(Structure):
+    _fields_ = [("val", c_uint32 * 2)]
+
+
+# Define the statfs structure exactly as in the C header
+class Statfs(Structure):
+    _fields_ = [
+        ("f_bsize", c_uint32),  # fundamental file system block size
+        ("f_iosize", c_int32),  # optimal transfer block size
+        ("f_blocks", c_uint64),  # total data blocks in file system
+        ("f_bfree", c_uint64),  # free blocks in fs
+        ("f_bavail", c_uint64),  # free blocks avail to non-superuser
+        ("f_files", c_uint64),  # total file nodes in file system
+        ("f_ffree", c_uint64),  # free file nodes in fs
+        ("f_fsid", fsid_t),  # file system id
+        ("f_owner", c_uint32),  # user that mounted the filesystem
+        ("f_type", c_uint32),  # type of filesystem
+        ("f_flags", c_uint32),  # copy of mount exported flags
+        ("f_fssubtype", c_uint32),  # fs sub-type (flavor)
+        ("f_fstypename", c_char * 16),  # fs type name
+        ("f_mntonname", c_char * 1024),  # directory on which mounted
+        ("f_mntfromname", c_char * 1024),  # mounted filesystem
+        ("f_flags_ext", c_uint32),  # extended flags
+        ("f_reserved", c_uint32 * 7),  # For future use
+    ]
+
+
+def bytes_to_str(bytes_val):
+    """Convert bytes to string, stopping at null terminator"""
+    try:
+        # Split at first null byte and decode to UTF-8
+        return bytes_val.split(b"\0", 1)[0].decode("utf-8")
+    except Exception:
+        # Fallback if decoding fails
+        return str(bytes_val)
+
+
+def dump_mount_info():
+    """Dump all mount information on macOS"""
+    # Load the C library
+    libc = ctypes.CDLL("libc.dylib")  # macOS specific
+
+    # Define function signature for getmntinfo_r_np
+    libc.getmntinfo_r_np.argtypes = [POINTER(POINTER(Statfs)), c_int]
+    libc.getmntinfo_r_np.restype = c_int
+
+    # Create a pointer to receive the array of statfs structures
+    statfs_ptr = POINTER(Statfs)()
+
+    # Call getmntinfo_r_np with mode = 0 (MNT_NOWAIT)
+    count = libc.getmntinfo_r_np(pointer(statfs_ptr), 0)
+
+    if count <= 0:
+        print("Error: Failed to get mount information")
+        return
+
+    print(f"Found {count} mounted filesystems\n")
+
+    # Process each mount
+    for i in range(count):
+        statfs = statfs_ptr[i]
+
+        # Calculate sizes
+        block_size = statfs.f_bsize
+        total_size = block_size * statfs.f_blocks
+        free_size = block_size * statfs.f_bfree
+        avail_size = block_size * statfs.f_bavail
+        used_size = total_size - free_size
+
+        # Usage percentage
+        usage_pct = (used_size / total_size * 100) if total_size > 0 else 0
+
+        # Print mount information
+        print(f"Mount #{i + 1}: {bytes_to_str(bytes(statfs.f_mntonname))}")
+        print("-" * 80)
+        print(f"Filesystem Type:  {bytes_to_str(bytes(statfs.f_fstypename))}")
+        print(f"Device:          {bytes_to_str(bytes(statfs.f_mntfromname))}")
+        print(f"Total Size:      {total_size / (1024**3):.2f} GB")
+        print(f"Used Space:      {used_size / (1024**3):.2f} GB")
+        print(f"Available Space: {avail_size / (1024**3):.2f} GB")
+        print(f"Usage:           {usage_pct:.1f}%")
+        print(f"Block Size:      {block_size} bytes")
+        print(f"Total Blocks:    {statfs.f_blocks}")
+        print(f"Free Blocks:     {statfs.f_bfree}")
+        print(f"Avail Blocks:    {statfs.f_bavail}")
+        print(f"Total Files:     {statfs.f_files}")
+        print(f"Free Files:      {statfs.f_ffree}")
+        print(f"FS Type:         {statfs.f_type}")
+        print(f"FS Subtype:      {statfs.f_fssubtype}")
+        print(f"Flags:           0x{statfs.f_flags:010x}")
+        print(f"Extended Flags:  0x{statfs.f_flags_ext:010x}")
+        print(f"FSID:            [{statfs.f_fsid.val[0]:#010x}, {statfs.f_fsid.val[1]:#010x}]")
+        print(f"Owner:           {statfs.f_owner}")
+        print()
+
+    # Free the memory allocated by getmntinfo_r_np
+    libc.free(statfs_ptr)
+
+
+if __name__ == "__main__":
+    dump_mount_info()

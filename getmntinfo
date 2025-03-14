@@ -7,6 +7,8 @@ A pure Python script to dump mount information on macOS using ctypes.
 import ctypes
 from ctypes import POINTER, Structure, c_char, c_int, c_int32, c_uint32, c_uint64, pointer
 
+from rich import print
+
 
 # Define fsid_t structure
 class fsid_t(Structure):

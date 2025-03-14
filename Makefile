@@ -1,7 +1,7 @@
 TARGETS := dump-fixups net-privesc byte-histogram env-var-path-search basenice find-macho
 
 ifeq ($(shell uname -s),Darwin)
-TARGETS += nsdpi dsc-info jevxcselect fsgetpath-util xnu-arm64-dump-tsd
+TARGETS += nsdpi dsc-info jevxcselect fsgetpath-util xnu-arm64-dump-tsd xnu-dump-image-activation-stack
 endif
 
 C_CXX_FLAGS := -g -Wall -Wextra -Wpedantic -Wno-nullability-extension -Wno-gnu-statement-expression-from-macro-expansion -I 3rdparty/optparse-wrapper
@@ -73,3 +73,6 @@ jevxcselect: jevxcselect.c
 
 find-macho: find-macho.cpp
 	$(CXX) -o $@ $^ $(CXX_FLAGS) -O3 -I 3rdparty/thread-pool/include
+
+xnu-dump-image-activation-stack: xnu-dump-image-activation-stack.c
+	$(CC) -o $@ $^ $(C_FLAGS)

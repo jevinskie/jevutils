@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/param.h>
 
 int main(int argc, const char **argv, const char **envp, const char **apple) {
     size_t i;
@@ -43,7 +44,7 @@ int main(int argc, const char **argv, const char **envp, const char **apple) {
         ++tapplep;
     } while (*tapplep && tapplep != stackaddr);
 
-    const char *strp = (const char *)&tapplep[1];
+    const char *strp = (const char *)roundup((uintptr_t)tapplep, 16);
     i                = 0;
     size_t slen      = 0;
     do {

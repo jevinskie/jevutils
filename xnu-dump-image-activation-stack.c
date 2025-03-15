@@ -58,9 +58,7 @@ int main(int argc, const char **argv, const char **envp, const char **apple) {
         got_null = !tapple;
     } while (!got_null);
 
-    const char *strp            = (const char *)roundup((uintptr_t)tapplep, 16);
-    uintptr_t apple_str_padding = (uintptr_t)strp - (uintptr_t)tapplep;
-    printf("padding between apple array pointers and string area: %zu\n", apple_str_padding);
+    const char *strp = (const char *)tapplep;
     printf("string area: %p\n", (void *)strp);
     i           = 0;
     size_t slen = 0;

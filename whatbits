@@ -14,6 +14,7 @@ def main(args):
     nbits_ndigits_b10 = int(math.ceil(math.log10(nbits)))
     nbytes = int(math.ceil(nbits / 8))
     nnibbles = nbytes * 2
+    print(f"value {n:#0{nnibbles + 2}x} = {n} (nbits: {nbits})\n")
     i = 0
     while n != 0:
         if n & 1:

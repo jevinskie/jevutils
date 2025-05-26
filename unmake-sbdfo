@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import argparse
+
+# /// Extended PCI address format
+# typedef struct {
+#   IN OUT  UINT32      Register:12;                ///< Register offset
+#   IN OUT  UINT32      Function:3;                 ///< Function number
+#   IN OUT  UINT32      Device:5;                   ///< Device number
+#   IN OUT  UINT32      Bus:8;                      ///< Bus number
+#   IN OUT  UINT32      Segment:4;                  ///< Segment
+# } EXT_PCI_ADDR;
+
+# /// Union type for PCI address
+# typedef union _PCI_ADDR {
+#   IN  UINT32          AddressValue;               ///< Formal address
+#   IN  EXT_PCI_ADDR    Address;                    ///< Extended address
+# } PCI_ADDR;
+
+# //   SBDFO - Segment Bus Device Function Offset
+# //   31:28   Segment (4-bits)
+# //   27:20   Bus     (8-bits)
+# //   19:15   Device  (5-bits)
+# //   14:12   Function(3-bits)
+# //   11:00   Offset  (12-bits)
+
+# #define MAKE_SBDFO(Seg, Bus, Dev, Fun, Off) ((((UINT32) (Seg)) << 28) | (((UINT32) (Bus)) << 20) | \
+#                    (((UINT32)(Dev)) << 15) | (((UINT32)(Fun)) << 12) | ((UINT32)(Off)))
+# #define ILLEGAL_SBDFO 0xFFFFFFFF
+
+
+def bits_max(n: int) -> int:
+    return (2**n) - 1
+
+
+def real_main(args: argparse.Namespace) -> None:
+    sbdfo = args.sbdfo
+    if not (0 <= sbdfo <= 0xFFFFFFFF):
+        raise ValueError(f"sbdfo out of range: {sbdfo:#10x}")
+
+    s = (sbdfo >> 28) & bits_max(4)
+    b = (sbdfo >> 20) & bits_max(8)
+    d = (sbdfo >> 15) & bits_max(5)
+    f = (sbdfo >> 12) & bits_max(3)
+    o = (sbdfo >> 0) & bits_max(12)
+
+    print(f"SBDFO: {sbdfo:#010x}")
+    print(f"seg: {s} bus: {b} d: {d} f: {f} o: {o:#x} ( {o} )")
+
+
+def parse_int(s: str) -> int:
+    return int(s, 16)
+
+
+def get_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="UNMAKE_SBDFO - Segment Bus Device Function Offset"
+    )
+    parser.add_argument("sbdfo", type=parse_int, help="SBDFO as hex")
+    return parser
+
+
+def main() -> None:
+    real_main(get_arg_parser().parse_args())
+
+
+if __name__ == "__main__":
+    main()

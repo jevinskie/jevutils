@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+
+import argparse
+
+# /// Extended PCI address format
+# typedef struct {
+#   IN OUT  UINT32      Register:12;                ///< Register offset
+#   IN OUT  UINT32      Function:3;                 ///< Function number
+#   IN OUT  UINT32      Device:5;                   ///< Device number
+#   IN OUT  UINT32      Bus:8;                      ///< Bus number
+#   IN OUT  UINT32      Segment:4;                  ///< Segment
+# } EXT_PCI_ADDR;
+
+# /// Union type for PCI address
+# typedef union _PCI_ADDR {
+#   IN  UINT32          AddressValue;               ///< Formal address
+#   IN  EXT_PCI_ADDR    Address;                    ///< Extended address
+# } PCI_ADDR;
+
+# //   SBDFO - Segment Bus Device Function Offset
+# //   31:28   Segment (4-bits)
+# //   27:20   Bus     (8-bits)
+# //   19:15   Device  (5-bits)
+# //   14:12   Function(3-bits)
+# //   11:00   Offset  (12-bits)
+
+# #define MAKE_SBDFO(Seg, Bus, Dev, Fun, Off) ((((UINT32) (Seg)) << 28) | (((UINT32) (Bus)) << 20) | \
+#                    (((UINT32)(Dev)) << 15) | (((UINT32)(Fun)) << 12) | ((UINT32)(Off)))
+# #define ILLEGAL_SBDFO 0xFFFFFFFF
+
+
+def bits_max(n: int) -> int:
+    return (2**n) - 1
+
+
+def real_main(args: argparse.Namespace) -> None:
+    s, b, d, f, o = args.seg, args.bus, args.dev, args.fun, args.off
+
+    if not (0 <= s <= bits_max(4)):
+        raise ValueError(f"seg {s} is out of range")
+    if not (0 <= b <= bits_max(8)):
+        raise ValueError(f"bus {b} is out of range")
+    if not (0 <= d <= bits_max(5)):
+        raise ValueError(f"dev {d} is out of range")
+    if not (0 <= f <= bits_max(3)):
+        raise ValueError(f"fun {f} is out of range")
+    if not (0 <= o <= bits_max(12)):
+        raise ValueError(f"off {o} is out of range")
+
+    sbdfo = (s << 28) | (b << 20) | (d << 15) | (f << 12) | o
+    if not (0 <= sbdfo <= 0xFFFFFFFF):
+        raise ValueError(f"sbdfo out of range: {sbdfo:#10x}")
+
+    print(f"{sbdfo:#010x}")
+
+
+def parse_int(s: str) -> int:
+    return int(s, 16)
+
+
+def get_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="MAKE_SBDFO - Segment Bus Device Function Offset")
+    parser.add_argument("seg", type=parse_int, help="Segment")
+    parser.add_argument("bus", type=parse_int, help="Bus")
+    parser.add_argument("dev", type=parse_int, help="Device")
+    parser.add_argument("fun", type=parse_int, help="Function")
+    parser.add_argument("off", type=parse_int, help="Offset")
+    return parser
+
+
+def main() -> None:
+    real_main(get_arg_parser().parse_args())
+
+
+if __name__ == "__main__":
+    main()

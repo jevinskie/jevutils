@@ -7,31 +7,66 @@ from more_itertools import chunked
 
 parser = argparse.ArgumentParser()
 parser.add_argument("hex_bytes", metavar="HB", type=str, nargs="*", help="Hex byte")
-parser.add_argument("-i", "--stdin", action="store_true", help="Get bytes from stdin")
-parser.add_argument(
+
+in_opts = parser.add_argument_group("input options")
+in_opts.add_argument("-i", "--stdin", action="store_true", help="Get bytes from stdin")
+in_opts.add_argument(
     "-b", "--stdin-binary", action="store_true", help="Specify that stdin is raw bytes"
 )
-parser.add_argument(
+
+swizzles = parser.add_argument_group("swizzles")
+swizzles.add_argument(
     "-r",
     "--reverse",
     action="count",
     default=0,
     help="Reverse byte order - can be repeated to invert option",
 )
-parser.add_argument(
+swizzles.add_argument(
     "-c",
     "--chunk",
     type=lambda x: int(x, 0),
     metavar="N",
     help="Chunk ever N bytes during byte reversal",
 )
-parser.add_argument("-H", "--hex", action="store_true", help="Output a normalized hex string")
-parser.add_argument(
+
+swizzles.add_argument("-2", "--byte-rev16", action="store_true", help="Byte reverse 2 byte chunks")
+swizzles.add_argument("-3", "--bit-rev16", action="store_true", help="Bit revese 2 byte chunks")
+
+swizzles.add_argument("-4", "--byte-rev32", action="store_true", help="Byte reverse 4 byte chunks")
+swizzles.add_argument("-5", "--bit-rev32", action="store_true", help="Bit revese 4 byte chunks")
+
+swizzles.add_argument("-8", "--byte-rev64", action="store_true", help="Byte reverse 8 byte chunks")
+swizzles.add_argument("-9", "--bit-rev64", action="store_true", help="Bit revese 8 byte chunks")
+
+out_opts = parser.add_argument_group("output options")
+out_opts.add_argument("-H", "--hex", action="store_true", help="Output a normalized hex string")
+out_opts.add_argument(
     "-x", "--hex-prefix", action="store_true", help="Output bytes seperated by ' 0x'"
 )
-parser.add_argument("-s", "--string", action="store_true", help="print escaped string literal")
-parser.add_argument("-B", "--output-binary", action="store_true", help="print binary")
+out_opts.add_argument("-s", "--string", action="store_true", help="print escaped string literal")
+out_opts.add_argument("-B", "--output-binary", action="store_true", help="print binary")
+out_opts.add_argument(
+    "-N", "--hex-num", action="store_true", help="Output an arbitary length hex integer"
+)
+
 args = parser.parse_args()
+
+if args.byte_rev16:
+    args.reverse = 1
+    args.chunk = 2
+elif args.bit_rev16:
+    raise NotImplementedError()
+elif args.byte_rev32:
+    args.reverse = 1
+    args.chunk = 4
+elif args.bit_rev32:
+    raise NotImplementedError()
+elif args.byte_rev64:
+    args.reverse = 1
+    args.chunk = 8
+elif args.bit_rev64:
+    raise NotImplementedError()
 
 if not args.stdin_binary:
     if not args.stdin:
@@ -55,11 +90,14 @@ if bool(args.reverse % 2):
         buf = buf[::-1]
 if args.string:
     print(repr(buf)[1:])
-if args.output_binary:
-    sys.stdout.buffer.write(buf)
-elif not (args.hex or args.hex_prefix):
+elif args.output_binary:
     sys.stdout.buffer.write(buf)
 elif args.hex_prefix:
     print(" ".join([f"{b:#04x}" for b in buf]))
+elif args.hex_num:
+    n = int.from_bytes(buf, "big")
+    print(f"{n:#x}")
+elif not (args.hex or args.hex_prefix):
+    sys.stdout.buffer.write(buf)
 else:
     print(buf.hex())

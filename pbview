@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+
+from AppKit import NSPasteboard
+from rich import print
+
+board = NSPasteboard.generalPasteboard()
+print("pb types:")
+print(board.types())

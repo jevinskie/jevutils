@@ -20,18 +20,25 @@ def PathDir(string) -> Path:
 
 
 def is_match(args, pth) -> bool:
+    ftype: str | None = None
+    mtype: str | None = None
     if args.regexes is not None or args.ftypes is not None:
         ftype = m.from_file(pth)
     if args.mtypes is not None:
         mtype = mmime.from_file(pth)
     if args.regexes is not None:
+        if ftype is None:
+            raise ValueError
         for pat in args.regexes:
+            # print(f"pat: {pat} ftype: {ftype}")
             if re.search(pat, ftype) is not None:
                 return True
     if args.ftypes is not None:
         if ftype in args.ftypes:
             return True
     if args.mtypes is not None:
+        if mtype is None:
+            raise ValueError
         if mtype in args.mtypes:
             return True
     return False

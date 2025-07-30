@@ -8,7 +8,7 @@ from path import Path
 from rich import print
 
 
-def find_potential_tocs(binary: bytes) -> list[int]:
+def find_potential_tocs(binary: bytes, base: int) -> list[int]:
     maybe_tocs: list[int] = []
     iread: set[int] = set()
 
@@ -27,12 +27,17 @@ def find_potential_tocs(binary: bytes) -> list[int]:
     print(f"len(arr): {alen}")
 
     for i in range(alen - (0x8000 // 8)):
-        ai = arr[i]
-        io = i + 0x8000
-        if ((i * 8) + 0x10000) in (0x1DBCF8, 0x1E3CF8):
-            print(f"i: {i} ai: {ai:#018x} io: {io:#018x}")
-        if ai == io:
-            maybe_tocs.append(i * 8)
+        this_addr = i * 8
+        this_addr += base
+        mb_toc_addr = this_addr + 0x8000
+        this_value = arr[i]
+        # print(f"this_addr: {this_addr:#x}")
+        if this_addr in (0x1DBCF8, 0x1E3CF8):
+            print(
+                f"i: {i:7d} this_addr: {this_addr:#x} mb_toc_addr: {mb_toc_addr:#x} this_value: {this_value:#018x}"
+            )
+        if mb_toc_addr == this_value:
+            maybe_tocs.append(this_addr)
         iread.add(i)
 
     return maybe_tocs
@@ -50,8 +55,9 @@ def real_main(args: argparse.Namespace) -> None:
     if args.base is None:
         base = 0
     print(f"base: {base:#018x}")
-    # maybe_tocs = find_potential_tocs(efb)
-    # print(f"maybe_tocs: {maybe_tocs}")
+    maybe_tocs = find_potential_tocs(efb, base)
+    maybe_tocs_strs = [f"{a:#010x}" for a in maybe_tocs]
+    print(f"maybe_tocs: {', '.join(maybe_tocs_strs)}")
 
 
 def parse_hex_int_str(s: str) -> int:

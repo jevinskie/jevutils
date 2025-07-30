@@ -33,19 +33,21 @@ def find_potential_tocs_raw(bin_buf: bytes, base: int) -> list[int]:
     print(
         f"base: {base:#018x} alen: {alen:6} first8: 0x{bin_buf[:8].hex()} first8_int: {first8_int:#018x} raw_len: {raw_len} % 8: {quad_off}"
     )
-    if first8_int == base + 0x8000:
-        maybe_tocs.append(base)
+    # if first8_int == base + 0x8000:
+    #     maybe_tocs.append(base)
 
-    for i in range(alen - (0x8000 // 8)):
+    for i in range(alen):
         this_addr = base + (i * 8)
         mb_toc_addr = this_addr + 0x8000
         this_value = arr[i]
-        # print(f"this_addr: {this_addr:#x}")
-        if this_addr in (0x1DBCF8, 0x1E3CF8):
+        if (i == 0) or (True and (this_addr in (0x1DBCF8, 0x1E3CF8))):
             print(
                 f"i: {i:7d} this_addr: {this_addr:#x} mb_toc_addr: {mb_toc_addr:#x} this_value: {this_value:#018x}"
             )
         if mb_toc_addr == this_value:
+            print(
+                f"MBTOC: i: {i:7d} this_addr: {this_addr:#x} mb_toc_addr: {mb_toc_addr:#x} this_value: {this_value:#018x}"
+            )
             maybe_tocs.append(this_addr)
         iread.add(i)
 
@@ -59,10 +61,12 @@ def find_potential_tocs(bin_path: Path, base: int | None = None) -> list[int]:
         bin_buf = open(bin_path, "rb").read()
         maybe_tocs = find_potential_tocs_raw(bin_buf, base)
     else:
-        bin_obj = lief.parse(str(bin_path))
+        bin_obj = lief.ELF.parse(str(bin_path))
         if bin_obj is None:
             raise ValueError(f"couldn't parse {bin_path}")
         for i, seg in enumerate(bin_obj.sections):
+            if lief.ELF.Section.FLAGS.ALLOC not in seg.flags_list:
+                continue
             print(f"i: {i} seg: {seg}")
             seg_va = seg.virtual_address
             seg_buf = bytes(seg.content)

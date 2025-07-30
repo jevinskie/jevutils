@@ -2,27 +2,33 @@
 
 import argparse
 import array
+import logging
 
-from elftools.elf.elffile import ELFFile
+import lief
 from path import Path
 from rich import print
 
+logger = logging.getLogger("ppc_toc")
+log = logger.info
+dbg = logger.debug
 
-def find_potential_tocs(binary: bytes, base: int) -> list[int]:
+
+def find_potential_tocs_raw(bin_buf: bytes, base: int) -> list[int]:
     maybe_tocs: list[int] = []
     iread: set[int] = set()
 
-    raw_len = len(binary)
+    raw_len = len(bin_buf)
     quad_off = raw_len % 8
     print(f"raw_len: {raw_len} % 8: {quad_off}")
     if raw_len:
-        binary = binary + bytes(8 - quad_off)
+        bin_buf = bin_buf + bytes(8 - quad_off)
 
-    bswap_bin = bytearray(binary)
-    for i in range(0, raw_len, 8):
-        bswap_bin[i : i + 8] = reversed(bswap_bin[i : i + 8])
+    # bswap_bin = bytearray(bin_buf)
+    # for i in range(0, raw_len, 8):
+    #     bswap_bin[i : i + 8] = reversed(bswap_bin[i : i + 8])
 
-    arr = array.array("Q", bswap_bin)
+    arr = array.array("Q", bin_buf)
+    # arr.byteswap()
     alen = len(arr)
     print(f"len(arr): {alen}")
 
@@ -43,19 +49,27 @@ def find_potential_tocs(binary: bytes, base: int) -> list[int]:
     return maybe_tocs
 
 
+def find_potential_tocs(bin_path: Path, base: int | None = None) -> list[int]:
+    maybe_tocs: list[int] = []
+
+    if base is not None:
+        bin_buf = open(bin_path, "rb").read()
+        maybe_tocs = find_potential_tocs_raw(bin_buf, base)
+    else:
+        bin_obj = lief.parse(str(bin_path))
+        if bin_obj is None:
+            raise ValueError(f"couldn't parse {bin_path}")
+        for i, seg in enumerate(bin_obj.sections):
+            print(f"i: {i} seg: {seg}")
+            seg_va = seg.virtual_address
+            seg_buf = bytes(seg.content)
+            maybe_tocs += find_potential_tocs_raw(seg_buf, seg_va)
+
+    return maybe_tocs
+
+
 def real_main(args: argparse.Namespace) -> None:
-    efb = open(args.binary, "rb").read()
-    efb_len = len(efb)
-    print(f"efb_len: {efb_len:#x} {efb_len}")
-    efh = open(args.binary, "rb")
-    ef = ELFFile(efh)
-    print(ef)
-    print(list(ef.iter_sections()))
-    base: int = args.base
-    if args.base is None:
-        base = 0
-    print(f"base: {base:#018x}")
-    maybe_tocs = find_potential_tocs(efb, base)
+    maybe_tocs = find_potential_tocs(args.binary, args.base)
     maybe_tocs_strs = [f"{a:#010x}" for a in maybe_tocs]
     print(f"maybe_tocs: {', '.join(maybe_tocs_strs)}")
 

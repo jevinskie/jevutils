@@ -25,12 +25,14 @@ class PTree(NodeMixin):
     fspath: Path = field()
     cache_path: Path | None = field(default=None)
 
-    def __init__(self, path: Path, parent: PTree | None, cache_path: Path | None = None) -> None:
+    def __init__(
+        self, path: Path, root: Path, parent: PTree | None, cache_path: Path | None = None
+    ) -> None:
         super().__init__()
         if cache_path is not None:
             if not cache_path.is_file():
                 raise TypeError(f"CachedDir cache_path '{cache_path}' is not a file")
-        self.fspath = path
+        self.fspath = root.relpathto(path)
         self.parent = parent
         self.cache_path = cache_path
 
@@ -51,6 +53,7 @@ class PTree(NodeMixin):
         is_root = dir_path.samefile(root)
         return cls(
             dir_path,
+            root,
             parent=cls.from_dir(dpp, root) if not is_root else None,
             cache_path=cache_file,
         )
@@ -65,11 +68,12 @@ class PTree(NodeMixin):
         if cache_path.exists() and cache_path.is_file():
             return cls(
                 dir_path,
+                root,
                 parent=cls.from_dir(dpp, root) if not is_root else None,
                 cache_path=cache_path,
             )
         else:
-            return cls(dir_path, parent=cls.from_dir(dpp, root) if not is_root else None)
+            return cls(dir_path, root, parent=cls.from_dir(dpp, root) if not is_root else None)
 
     def dump(self):
         for pre, fill, node in RenderTree(self):

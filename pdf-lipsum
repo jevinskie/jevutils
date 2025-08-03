@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+
+import argparse
+import random
+import sys
+
+import pikepdf
+from path import Path
+
+
+def is_path_pdf(p: Path) -> bool:
+    if not p.is_file():
+        return False
+    if p.suffix != ".pdf":
+        return False
+    return True
+
+
+def extract_random_pages(input_dir: Path, n_pages: int, output_file: Path):
+    # Collect all PDF files in the input directory
+    pdf_files = list(input_dir.walkfiles(is_path_pdf))  # type: ignore
+    if not pdf_files:
+        print(f"No PDF files found in {input_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    # Prepare a list of (pdf_path, page_number) tuples
+    page_sources = []
+    for pdf_path in pdf_files:
+        try:
+            with pikepdf.open(pdf_path) as pdf:
+                num_pages = len(pdf.pages)
+                page_sources.extend((pdf_path, i) for i in range(num_pages))
+        except Exception as e:
+            print(f"Error reading {pdf_path}: {e}", file=sys.stderr)
+
+    if len(page_sources) < n_pages:
+        print(
+            f"Not enough pages available: requested {n_pages}, found {len(page_sources)}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Randomly sample N pages
+    selected_pages = random.sample(page_sources, n_pages)
+
+    # Create output PDF
+    output_pdf = pikepdf.Pdf.new()
+
+    for pdf_path, page_number in selected_pages:
+        with pikepdf.open(pdf_path) as src_pdf:
+            output_pdf.pages.append(src_pdf.pages[page_number])
+
+    output_pdf.save(str(output_file))
+    print(f"Created {output_file} with {n_pages} pages from random PDFs in {input_dir}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Extract N random PDF pages from files in a directory."
+    )
+    parser.add_argument("n", type=int, help="Number of random pages to extract")
+    parser.add_argument("directory", type=Path, help="Directory containing PDF files")
+    parser.add_argument(
+        "--output", "-o", type=Path, default=Path("output.pdf"), help="Output PDF file"
+    )
+    args = parser.parse_args()
+
+    if not args.directory.is_dir():
+        print(f"{args.directory} is not a valid directory", file=sys.stderr)
+        sys.exit(1)
+
+    extract_random_pages(args.directory, args.n, args.output)
+
+
+if __name__ == "__main__":
+    main()

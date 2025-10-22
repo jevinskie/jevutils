@@ -12,12 +12,12 @@ from rich import print
 
 # Define fsid_t structure
 class fsid_t(Structure):
-    _fields_ = [("val", c_uint32 * 2)]
+    _fields_ = (("val", c_uint32 * 2),)
 
 
 # Define the statfs structure exactly as in the C header
 class Statfs(Structure):
-    _fields_ = [
+    _fields_ = (
         ("f_bsize", c_uint32),  # fundamental file system block size
         ("f_iosize", c_int32),  # optimal transfer block size
         ("f_blocks", c_uint64),  # total data blocks in file system
@@ -35,7 +35,7 @@ class Statfs(Structure):
         ("f_mntfromname", c_char * 1024),  # mounted filesystem
         ("f_flags_ext", c_uint32),  # extended flags
         ("f_reserved", c_uint32 * 7),  # For future use
-    ]
+    )
 
 
 def bytes_to_str(bytes_val):

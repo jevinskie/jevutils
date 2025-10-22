@@ -6,13 +6,13 @@ import math
 
 def main(args):
     n = args.value
-    nbits = int(math.ceil(math.log2(n)))
+    nbits = math.ceil(math.log2(n))
     if nbits > 16 * 1024:
         raise ValueError(
             "Whoah there cowboy - sure you wanna do more than 16 kibibits? Comment me out if you do."
         )
-    nbits_ndigits_b10 = int(math.ceil(math.log10(nbits)))
-    nbytes = int(math.ceil(nbits / 8))
+    nbits_ndigits_b10 = math.ceil(math.log10(nbits))
+    nbytes = math.ceil(nbits / 8)
     nnibbles = nbytes * 2
     popcnt = bin(n)[2:].count("1")
     print(f"value {n:#0{nnibbles + 2}x} = {n} (nbits: {nbits} popcount: {popcnt})\n")

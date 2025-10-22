@@ -442,8 +442,6 @@ def decode_header(in_buf: bytes) -> tuple[int, int, ByteHistogram, Histogram]:
                 symbol_freq |= in_buf[buf_idx + i] << (i * 8)
             byte_hist[symbol_idx] = symbol_freq
             symbol_hist[symbol_idx] = symbol_freq
-        else:
-            pass
         buf_idx += num_symbol_freq_bytes
         if symbol_idx == 0x04:  # 1 EoT always added
             assert symbol_freq == 1

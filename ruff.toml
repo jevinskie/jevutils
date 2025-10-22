@@ -1,5 +1,9 @@
 line-length = 100
+preview = true
+required-version = ">=0.14"
+show-fixes = true
 target-version = "py311"
+unsafe-fixes = true
 
 [lint]
-extend-select = ["I"]
+extend-select = ["I", "PERF", "RUF", "FA", "UP"]

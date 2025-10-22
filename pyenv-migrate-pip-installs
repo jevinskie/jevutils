@@ -54,7 +54,7 @@ class CompletedProcessWithOut(subprocess.CompletedProcess):
         orig: str = super().__repr__()
         orig = orig.removesuffix(")")
         if self.out is not None:
-            return f"{orig}, out={repr(self.out)})"
+            return f"{orig}, out={self.out!r})"
         else:
             return f"{orig}, out=None)"
 

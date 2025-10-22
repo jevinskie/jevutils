@@ -49,7 +49,7 @@ def pkg_paths(pkg_name) -> list[PathInfo]:
     pkg_pths: list[PathInfo] = []
     info = pkg_info(pkg_name)
     root_dir = Path(info["volume"]) / Path(info["install-location"])
-    for fip, fii in info["paths"].items():
+    for fip in info["paths"].keys():
         pth = root_dir / Path(fip)
         pkg_pths.append(PathInfo(pth, False))
     if len(pkg_pths) == 0:

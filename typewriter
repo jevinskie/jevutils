@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# ruff: noqa RUF001
+
 import sys
 
 upper_off = ord("𝙰") - ord("A")

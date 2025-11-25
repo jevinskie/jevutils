@@ -1,5 +1,5 @@
 # Note the order is intentional to avoid multiple passes of the hooks
-minimum_pre_commit_version: 2.9.0
+minimum_pre_commit_version: 4.5.0
 repos:
 - repo: meta
   hooks:
@@ -9,9 +9,9 @@ repos:
   rev: v6.0.0
   hooks:
   - id: check-added-large-files
+    args: [--maxkb, '1024']
   - id: check-case-conflict
   - id: check-shebang-scripts-are-executable
-  - id: check-executables-have-shebangs
   - id: check-yaml
   - id: check-toml
   - id: check-vcs-permalinks
@@ -30,18 +30,21 @@ repos:
   - id: pretty-format-toml
     args: [--autofix]
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v21.1.2
+  rev: v21.1.6
   hooks:
   - id: clang-format
     types_or: [c++, c, objective-c, objective-c++]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.14.1
+  rev: v0.14.6
   hooks:
-  - id: ruff
+  - id: ruff-check
     args: [--fix, --exit-non-zero-on-fix, --show-fixes]
+    types_or: [python, pyi]
   - id: ruff-format
+    types_or: [python, pyi]
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
   hooks:
   - id: trailing-whitespace
+    args: [--markdown-linebreak-ext=md]
   - id: end-of-file-fixer

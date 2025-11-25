@@ -1,3 +1,4 @@
+#include <AppKit/NSScreen.h>
 #ifndef __APPLE__
 #error dsc-info is only for Apple platforms
 #endif
@@ -6,10 +7,13 @@
 #import <Foundation/Foundation.h>
 
 int main() {
-    NSScreen *screen           = NSScreen.mainScreen;
-    NSDictionary *description  = screen.deviceDescription;
-    NSSize displayPixelSize    = [description[NSDeviceSize] sizeValue];
-    CGSize displayPhysicalSize = CGDisplayScreenSize([description[@"NSScreenNumber"] unsignedIntValue]);
-    printf("%0.2f\n", 25.4 * displayPixelSize.width / displayPhysicalSize.width);
+    int i = 0;
+    for (NSScreen *screen in NSScreen.screens) {
+        NSDictionary *description  = screen.deviceDescription;
+        NSSize displayPixelSize    = [description[NSDeviceSize] sizeValue];
+        CGSize displayPhysicalSize = CGDisplayScreenSize([description[@"NSScreenNumber"] unsignedIntValue]);
+        printf("screen[%d]: %0.2f dpi\n", i, 25.4 * displayPixelSize.width / displayPhysicalSize.width);
+        ++i;
+    }
     return 0;
 }

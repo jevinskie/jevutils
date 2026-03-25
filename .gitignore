@@ -13,3 +13,4 @@
 /xnu-arm64-dump-tsd
 /xnu-dump-image-activation-stack
 /find-macho
+find-elf
